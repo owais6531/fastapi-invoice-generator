@@ -237,3 +237,52 @@ Check the file [release-notes.md](./release-notes.md).
 ## License
 
 The Full Stack FastAPI Template is licensed under the terms of the MIT license.
+
+>>>>>>>>>>>>>>>>>>>>>Full Stack FastAPI Template End Here<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+Full-stack-fastapi-template app, want to add a standard invoice generation feature for a SaaS, freelancing, or service-based platform:
+
+Project Context & Requirements
+
+a. Core purpose: Service-based SaaS platform. user management, supplier and customer management.
+b. Invoices: Required for clients, tied to clients accounts.
+c. Customization: Basic (logo, business info, custom notes).
+
+a. Info: Client name, address, contact, NTN; itemized services/products (description, qty, price); subtotal, VAT, total, discounts; invoice date; due date; notes/terms.
+b. Tax: Configurable VAT rate (e.g., 0–25%), simple per-invoice or per-item.
+c. Unique number: Yes, auto-generated invoice number but editable so user can change, but check to avoide duplication of invoice number.
+
+Integration with Existing System
+a. Auth: Yes, JWT-based user management; invoices tied to logged-in users.
+b. Multi-user: no.
+c. Storage: Invoices stored in the existing Postgres database.
+
+Frontend Integration
+a. Framework: React (Vite, TanStack Router).
+b. UI: Should match existing dashboard style; use Chakra UI or current design system.
+c. Edit/Preview: Users can edit invoice details, preview, and download as PDF. but after post to fbr invoices are unable to be edited.
+
+Backend Integration
+
+a. API: FastAPI backend; integrate invoice logic as new endpoints.
+b. Sync/Async: Synchronous PDF generation (instant download).
+c. External: No external tax system integration for now; internal use but posting to fbr in json. PDF Generation & Export
+
+a. PDF: Yes, downloadable; basic customization (logo, notes).
+b. Disclaimers: Optional terms/notes section at the bottom of invoice.
+
+Features and Enhancements
+
+a. Items: Add multiple items dynamically.
+b. Calculations: Support discounts, per-item VAT, and custom tax rates.
+c. Export: PDF download; CSV export optional; no accounting system integration initially.
+
+Deployment & Performance
+
+a. Performance: No special optimization needed for small/medium scale.
+b. Deployment: Frontend and backend deployed together (monorepo); microservices not required.
+c. Scalability: Scalable for moderate user base; can be optimized later.
+Testing and Support
+
+a. Testing: Unit and integration tests for invoice API and PDF generation.
+b. Maintenance: Occasional updates for tax rates, UI tweaks, and bug fixes.
