@@ -1,7 +1,108 @@
-# Full Stack FastAPI Template
+# FBR Invoicing Application
+
+A full-stack web application for FBR (Federal Board of Revenue) compliant invoicing built with FastAPI and React.
 
 <a href="https://github.com/fastapi/full-stack-fastapi-template/actions?query=workflow%3ATest" target="_blank"><img src="https://github.com/fastapi/full-stack-fastapi-template/workflows/Test/badge.svg" alt="Test"></a>
 <a href="https://coverage-badge.samuelcolvin.workers.dev/redirect/fastapi/full-stack-fastapi-template" target="_blank"><img src="https://coverage-badge.samuelcolvin.workers.dev/fastapi/full-stack-fastapi-template.svg" alt="Coverage"></a>
+
+## Quick Start
+
+### 🚀 Automated Setup (Recommended)
+
+For Windows users, run the automated installation script:
+```bash
+install_all_dependencies.bat
+```
+
+### 📋 Manual Setup
+
+For detailed setup instructions, see our [Complete Setup Guide](SETUP_GUIDE.md).
+
+#### Prerequisites
+- Python 3.11+
+- Node.js 18+
+- PostgreSQL 14+
+- Git
+
+#### Quick Commands
+```bash
+# Clone repository
+git clone <your-repo-url>
+cd FBR-invoicing-app
+
+# Backend setup
+cd backend
+python -m venv .venv
+.venv\Scripts\activate  # Windows
+source .venv/bin/activate  # macOS/Linux
+pip install -r requirements.txt
+cp .env.example .env  # Configure your settings
+alembic upgrade head
+
+# Frontend setup
+cd ../frontend
+npm install
+cp .env.example .env  # Configure your settings
+npm run generate-client
+
+# Start development servers
+# Terminal 1 (Backend):
+cd backend && python -m uvicorn app.main:app --reload
+# Terminal 2 (Frontend):
+cd frontend && npm run dev
+```
+
+### 🐋 Docker Setup
+```bash
+docker-compose up -d
+```
+
+## 📁 Project Structure
+
+```
+FBR-invoicing-app/
+├── backend/                 # FastAPI backend application
+│   ├── app/                # Application code
+│   │   ├── api/           # API routes
+│   │   ├── core/          # Core functionality
+│   │   ├── models.py      # Database models
+│   │   └── main.py        # Application entry point
+│   ├── requirements.txt   # Python dependencies
+│   └── pyproject.toml     # Project configuration
+├── frontend/               # React frontend application
+│   ├── src/               # Source code
+│   │   ├── components/    # React components
+│   │   ├── routes/        # Application routes
+│   │   └── client/        # API client
+│   ├── package.json       # Node.js dependencies
+│   └── vite.config.ts     # Vite configuration
+├── docker-compose.yml      # Docker services
+├── SETUP_GUIDE.md         # Complete setup instructions
+└── README.md              # This file
+```
+
+## 🎯 Key Features
+
+- **📊 Invoice Management**: Create, edit, and manage FBR-compliant invoices
+- **👥 Customer Management**: Comprehensive customer database
+- **📦 Product Catalog**: Manage products with HSN codes and tax rates
+- **🏢 Company Profile**: Configure company information and settings
+- **📈 Dashboard**: Real-time analytics and reporting
+- **🔐 Authentication**: Secure user authentication and authorization
+- **📱 Responsive Design**: Works on desktop, tablet, and mobile devices
+- **🌙 Dark Mode**: Built-in dark/light theme support
+- **📄 PDF Generation**: Generate professional PDF invoices
+- **📊 Excel Export**: Export data to Excel format
+- **🔍 Advanced Search**: Search and filter across all entities
+- **⚡ Real-time Updates**: Live data synchronization
+
+## 📚 Documentation
+
+- 📋 [Complete Setup Guide](SETUP_GUIDE.md) - Comprehensive setup instructions
+- 📋 [Dependency Installation Guide](DEPENDENCY_INSTALLATION.md) - Step-by-step installation instructions
+- 📚 [Dependencies Management Guide](DEPENDENCIES_README.md) - Comprehensive dependency documentation
+- 🚀 [Development Guide](development.md) - Development setup and workflow
+- 🚢 [Deployment Guide](deployment.md) - Production deployment instructions
 
 ## Technology Stack and Features
 
@@ -234,9 +335,57 @@ This includes using Docker Compose, custom local domains, `.env` configurations,
 
 Check the file [release-notes.md](./release-notes.md).
 
-## License
+## 🛠️ Technology Stack
 
-The Full Stack FastAPI Template is licensed under the terms of the MIT license.
+- **Backend**: FastAPI (Python)
+- **Frontend**: React with TypeScript
+- **Database**: PostgreSQL with SQLModel
+- **UI Framework**: Chakra UI
+- **Build Tool**: Vite
+- **Containerization**: Docker & Docker Compose
+- **Authentication**: JWT-based authentication
+- **API Documentation**: Automatic OpenAPI/Swagger documentation
+- **State Management**: TanStack Query (React Query)
+- **Routing**: TanStack Router
+- **Form Handling**: React Hook Form
+- **PDF Generation**: ReportLab
+- **Excel Processing**: Pandas, OpenPyXL
+
+## 🤝 Contributing
+
+We welcome contributions! Please follow these steps:
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add some amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+### Development Guidelines
+
+- Follow the existing code style
+- Write tests for new features
+- Update documentation as needed
+- Ensure all tests pass before submitting
+
+## 📝 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 🆘 Support
+
+If you encounter any issues or have questions:
+
+1. Check the [Setup Guide](SETUP_GUIDE.md) for common solutions
+2. Search existing [Issues](../../issues)
+3. Create a new issue with detailed information
+
+## 🙏 Acknowledgments
+
+- FastAPI team for the excellent framework
+- React and TypeScript communities
+- Chakra UI for the beautiful components
+- All contributors who help improve this project
 
 >>>>>>>>>>>>>>>>>>>>>Full Stack FastAPI Template End Here<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 

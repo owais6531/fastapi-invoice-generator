@@ -18,9 +18,16 @@ import { Route as LoginImport } from './routes/login'
 import { Route as LayoutImport } from './routes/_layout'
 import { Route as LayoutIndexImport } from './routes/_layout/index'
 import { Route as LayoutSettingsImport } from './routes/_layout/settings'
+import { Route as LayoutProductsImport } from './routes/_layout/products'
 import { Route as LayoutItemsImport } from './routes/_layout/items'
 import { Route as LayoutInvoiceImport } from './routes/_layout/invoice'
+import { Route as LayoutCustomersImport } from './routes/_layout/customers'
+import { Route as LayoutCompanyImport } from './routes/_layout/company'
 import { Route as LayoutAdminImport } from './routes/_layout/admin'
+import { Route as LayoutInvoicesIndexImport } from './routes/_layout/invoices/index'
+import { Route as LayoutInvoicesCreateImport } from './routes/_layout/invoices/create'
+import { Route as LayoutInvoicesInvoiceIdImport } from './routes/_layout/invoices/$invoiceId'
+import { Route as LayoutInvoicesInvoiceIdEditImport } from './routes/_layout/invoices/$invoiceId/edit'
 
 // Create/Update Routes
 
@@ -59,6 +66,11 @@ const LayoutSettingsRoute = LayoutSettingsImport.update({
   getParentRoute: () => LayoutRoute,
 } as any)
 
+const LayoutProductsRoute = LayoutProductsImport.update({
+  path: '/products',
+  getParentRoute: () => LayoutRoute,
+} as any)
+
 const LayoutItemsRoute = LayoutItemsImport.update({
   path: '/items',
   getParentRoute: () => LayoutRoute,
@@ -69,10 +81,41 @@ const LayoutInvoiceRoute = LayoutInvoiceImport.update({
   getParentRoute: () => LayoutRoute,
 } as any)
 
+const LayoutCustomersRoute = LayoutCustomersImport.update({
+  path: '/customers',
+  getParentRoute: () => LayoutRoute,
+} as any)
+
+const LayoutCompanyRoute = LayoutCompanyImport.update({
+  path: '/company',
+  getParentRoute: () => LayoutRoute,
+} as any)
+
 const LayoutAdminRoute = LayoutAdminImport.update({
   path: '/admin',
   getParentRoute: () => LayoutRoute,
 } as any)
+
+const LayoutInvoicesIndexRoute = LayoutInvoicesIndexImport.update({
+  path: '/invoices/',
+  getParentRoute: () => LayoutRoute,
+} as any)
+
+const LayoutInvoicesCreateRoute = LayoutInvoicesCreateImport.update({
+  path: '/invoices/create',
+  getParentRoute: () => LayoutRoute,
+} as any)
+
+const LayoutInvoicesInvoiceIdRoute = LayoutInvoicesInvoiceIdImport.update({
+  path: '/invoices/$invoiceId',
+  getParentRoute: () => LayoutRoute,
+} as any)
+
+const LayoutInvoicesInvoiceIdEditRoute =
+  LayoutInvoicesInvoiceIdEditImport.update({
+    path: '/edit',
+    getParentRoute: () => LayoutInvoicesInvoiceIdRoute,
+  } as any)
 
 // Populate the FileRoutesByPath interface
 
@@ -102,12 +145,24 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LayoutAdminImport
       parentRoute: typeof LayoutImport
     }
+    '/_layout/company': {
+      preLoaderRoute: typeof LayoutCompanyImport
+      parentRoute: typeof LayoutImport
+    }
+    '/_layout/customers': {
+      preLoaderRoute: typeof LayoutCustomersImport
+      parentRoute: typeof LayoutImport
+    }
     '/_layout/invoice': {
       preLoaderRoute: typeof LayoutInvoiceImport
       parentRoute: typeof LayoutImport
     }
     '/_layout/items': {
       preLoaderRoute: typeof LayoutItemsImport
+      parentRoute: typeof LayoutImport
+    }
+    '/_layout/products': {
+      preLoaderRoute: typeof LayoutProductsImport
       parentRoute: typeof LayoutImport
     }
     '/_layout/settings': {
@@ -118,6 +173,22 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LayoutIndexImport
       parentRoute: typeof LayoutImport
     }
+    '/_layout/invoices/$invoiceId': {
+      preLoaderRoute: typeof LayoutInvoicesInvoiceIdImport
+      parentRoute: typeof LayoutImport
+    }
+    '/_layout/invoices/create': {
+      preLoaderRoute: typeof LayoutInvoicesCreateImport
+      parentRoute: typeof LayoutImport
+    }
+    '/_layout/invoices/': {
+      preLoaderRoute: typeof LayoutInvoicesIndexImport
+      parentRoute: typeof LayoutImport
+    }
+    '/_layout/invoices/$invoiceId/edit': {
+      preLoaderRoute: typeof LayoutInvoicesInvoiceIdEditImport
+      parentRoute: typeof LayoutInvoicesInvoiceIdImport
+    }
   }
 }
 
@@ -126,10 +197,18 @@ declare module '@tanstack/react-router' {
 export const routeTree = rootRoute.addChildren([
   LayoutRoute.addChildren([
     LayoutAdminRoute,
+    LayoutCompanyRoute,
+    LayoutCustomersRoute,
     LayoutInvoiceRoute,
     LayoutItemsRoute,
+    LayoutProductsRoute,
     LayoutSettingsRoute,
     LayoutIndexRoute,
+    LayoutInvoicesInvoiceIdRoute.addChildren([
+      LayoutInvoicesInvoiceIdEditRoute,
+    ]),
+    LayoutInvoicesCreateRoute,
+    LayoutInvoicesIndexRoute,
   ]),
   LoginRoute,
   RecoverPasswordRoute,

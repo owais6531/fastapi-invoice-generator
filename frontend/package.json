@@ -8,7 +8,8 @@
     "build": "tsc -p tsconfig.build.json && vite build",
     "lint": "biome check --apply-unsafe --no-errors-on-unmatched --files-ignore-unknown=true ./",
     "preview": "vite preview",
-    "generate-client": "openapi-ts"
+    "generate-client": "openapi-ts",
+    "install-deps": "node install_dependencies.js"
   },
   "dependencies": {
     "@chakra-ui/react": "^3.8.0",
@@ -23,7 +24,19 @@
     "react-dom": "^18.2.0",
     "react-error-boundary": "^5.0.0",
     "react-hook-form": "7.49.3",
-    "react-icons": "^5.5.0"
+    "react-icons": "^5.5.0",
+    "@tanstack/react-table": "^8.20.5",
+    "react-datepicker": "^7.5.0",
+    "react-dropzone": "^14.2.9",
+    "@hookform/resolvers": "^3.9.1",
+    "zod": "^3.24.1",
+    "date-fns": "^4.1.0",
+    "react-select": "^5.8.3",
+    "react-number-format": "^5.4.2",
+    "file-saver": "^2.0.5",
+    "xlsx": "^0.18.5",
+    "jspdf": "^2.5.2",
+    "html2canvas": "^1.4.1"
   },
   "devDependencies": {
     "@biomejs/biome": "1.9.4",
@@ -37,6 +50,7 @@
     "@vitejs/plugin-react-swc": "^3.9.0",
     "dotenv": "^16.4.5",
     "typescript": "^5.2.2",
-    "vite": "^6.3.4"
+    "vite": "^6.3.4",
+    "@types/file-saver": "^2.0.7"
   }
 }

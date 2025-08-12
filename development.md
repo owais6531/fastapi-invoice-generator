@@ -1,4 +1,19 @@
+
 # FastAPI Project - Development
+
+## Database Migrations
+
+When you change your models, generate a new migration with:
+
+```bash
+alembic revision --autogenerate -m "Describe your change"
+```
+
+Then apply the migration to update your database schema:
+
+```bash
+alembic upgrade head
+```
 
 ## Docker Compose
 
