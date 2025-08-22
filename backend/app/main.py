@@ -1,3 +1,5 @@
+import sys
+
 import sentry_sdk
 from fastapi import FastAPI
 from fastapi.routing import APIRoute
@@ -6,9 +8,13 @@ from starlette.middleware.cors import CORSMiddleware
 from app.api.main import api_router
 from app.core.config import settings
 
+sys.path.insert(0, r"D:\softwareInv\fastapi-invoice-generator\fastapi-invoice-generator\backend")
+
 
 def custom_generate_unique_id(route: APIRoute) -> str:
-    return f"{route.tags[0]}-{route.name}"
+    if route.tags:
+        return f"{route.tags[0]}-{route.name}"
+    return route.name
 
 
 if settings.SENTRY_DSN and settings.ENVIRONMENT != "local":
@@ -31,3 +37,8 @@ if settings.all_cors_origins:
     )
 
 app.include_router(api_router, prefix=settings.API_V1_STR)
+
+
+@app.get("/")
+def root() -> dict[str, str]:
+    return {"message": "Welcome to the FastAPI Invoice Generator API!"}

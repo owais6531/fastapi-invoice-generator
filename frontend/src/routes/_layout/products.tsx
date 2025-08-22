@@ -1,41 +1,34 @@
+import { Button } from "@/components/ui/button"
+import { Card, CardBody } from "@/components/ui/card"
+import { InputGroup } from "@/components/ui/input-group"
+import { Select } from "@/components/ui/select"
+import { toaster } from "@/components/ui/toaster"
 import {
   Badge,
-  Box,
-  Button,
+  Field as ChakraField,
   Container,
   Dialog,
-  Field as ChakraField,
   Flex,
+  HStack,
   Heading,
+  IconButton,
   Input,
   NumberInput,
   Table,
   Text,
-  useDisclosure,
-  VStack,
-  Card,
-  CardBody,
-  HStack,
-  IconButton,
-  Select,
   Textarea,
-} from "@chakra-ui/react";
-import { InputGroup } from "@/components/ui/input-group";
-import { toaster } from "@/components/ui/toaster";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
-import { createFileRoute } from "@tanstack/react-router"
-import { useForm, Controller } from "react-hook-form"
+  VStack,
+  useDisclosure,
+} from "@chakra-ui/react"
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import { createFileRoute, useNavigate } from "@tanstack/react-router"
 import { useState } from "react"
-import { FiSearch, FiPlus, FiEdit, FiTrash2 } from "react-icons/fi"
+import { Controller, useForm } from "react-hook-form"
+import { FiEdit, FiPlus, FiSearch, FiTrash2 } from "react-icons/fi"
 import { z } from "zod"
 
-import { type ApiError } from "@/client"
-import {
-  type ProductPublic,
-  type ProductCreate,
-  type ProductUpdate,
-  ProductsService,
-} from "@/client/products-service"
+import type { ApiError } from "@/client"
+import { type ProductPublic, ProductsService } from "@/client/products-service"
 
 interface ProductFormData {
   hs_code: string
@@ -54,9 +47,32 @@ interface ProductFormData {
 }
 
 const unitOfMeasures = [
-  "PCS", "KG", "LTR", "MTR", "SQM", "CUM", "TON", "BOX", "PACK", "SET",
-  "PAIR", "DOZEN", "GROSS", "BUNDLE", "ROLL", "SHEET", "BOTTLE", "CAN",
-  "BAG", "CARTON", "CASE", "DRUM", "GALLON", "YARD", "FOOT", "INCH"
+  "PCS",
+  "KG",
+  "LTR",
+  "MTR",
+  "SQM",
+  "CUM",
+  "TON",
+  "BOX",
+  "PACK",
+  "SET",
+  "PAIR",
+  "DOZEN",
+  "GROSS",
+  "BUNDLE",
+  "ROLL",
+  "SHEET",
+  "BOTTLE",
+  "CAN",
+  "BAG",
+  "CARTON",
+  "CASE",
+  "DRUM",
+  "GALLON",
+  "YARD",
+  "FOOT",
+  "INCH",
 ]
 
 const taxRates = [
@@ -78,19 +94,23 @@ const productsSearchSchema = z.object({
 
 const PER_PAGE = 10
 
-export const Route = createFileRoute("/_layout/products")({ 
+export const Route = createFileRoute("/_layout/products")({
   component: ProductsPage,
   validateSearch: productsSearchSchema,
 })
 
 function ProductsPage() {
   const { page = 1, search = "" } = Route.useSearch()
-  const navigate = Route.useNavigate()
+  const navigate = useNavigate({ from: Route.fullPath })
   const queryClient = useQueryClient()
 
-  const { isOpen, onOpen, onClose } = useDisclosure()
-  const [editingProduct, setEditingProduct] = useState<ProductPublic | null>(null)
+  const { open, onOpen, onClose } = useDisclosure()
+  const [editingProduct, setEditingProduct] = useState<ProductPublic | null>(
+    null,
+  )
   const [searchTerm, setSearchTerm] = useState(search)
+
+  // Use ChakraField components directly
 
   const {
     register,
@@ -100,9 +120,9 @@ function ProductsPage() {
     formState: { errors, isSubmitting },
   } = useForm<ProductFormData>({
     defaultValues: {
-      is_active: true,
       tax_rate: 18,
       unit_price: 0,
+      sale_type: "standard",
     },
   })
 
@@ -112,11 +132,16 @@ function ProductsPage() {
     isLoading,
     isError,
   } = useQuery({
-    queryKey: ["products", { skip: (page - 1) * PER_PAGE, limit: PER_PAGE, search }],
-    queryFn: () => ProductsService.readProducts({
-      skip: (page - 1) * PER_PAGE,
-      limit: PER_PAGE,
-    }),
+    queryKey: [
+      "products",
+      { skip: (page - 1) * PER_PAGE, limit: PER_PAGE, search },
+    ],
+    queryFn: () =>
+      ProductsService.readProducts({
+        skip: (page - 1) * PER_PAGE,
+        limit: PER_PAGE,
+        search,
+      }),
   })
 
   // Mutation to create product
@@ -176,7 +201,8 @@ function ProductsPage() {
 
   // Mutation to delete product
   const deleteMutation = useMutation({
-    mutationFn: (id: string) => ProductsService.deleteProduct({ productId: id }),
+    mutationFn: (id: string) =>
+      ProductsService.deleteProduct({ productId: id }),
     onSuccess: () => {
       toaster.create({
         title: "Success",
@@ -226,12 +252,12 @@ function ProductsPage() {
   const handleAdd = () => {
     setEditingProduct(null)
     reset({
-      hs_code: '',
-      description: '',
-      uom: '',
+      hs_code: "",
+      description: "",
+      uom: "",
       unit_price: 0,
       tax_rate: 0,
-      sale_type: 'standard',
+      sale_type: "standard",
     })
     onOpen()
   }
@@ -250,10 +276,11 @@ function ProductsPage() {
 
   return (
     <Container maxW="7xl" py={8}>
-      <VStack spacing={6} align="stretch">
+      <VStack gap={6} align="stretch">
         <Flex justify="space-between" align="center">
           <Heading size="lg">Product Management</Heading>
-          <Button leftIcon={<FiPlus />} colorScheme="blue" onClick={handleAdd}>
+          <Button colorPalette="blue" onClick={handleAdd}>
+            <FiPlus />
             Add Product
           </Button>
         </Flex>
@@ -283,7 +310,7 @@ function ProductsPage() {
             ) : isError ? (
               <Text color="red.500">Error loading products</Text>
             ) : (
-              <Table.Root variant="simple">
+              <Table.Root>
                 <Table.Header>
                   <Table.Row>
                     <Table.ColumnHeader>Description</Table.ColumnHeader>
@@ -314,26 +341,26 @@ function ProductsPage() {
                       </Table.Cell>
                       <Table.Cell>{product.tax_rate}%</Table.Cell>
                       <Table.Cell>
-                        <Badge colorScheme="blue">
-                          {product.sale_type}
-                        </Badge>
+                        <Badge colorPalette="blue">{product.sale_type}</Badge>
                       </Table.Cell>
                       <Table.Cell>
-                        <HStack spacing={2}>
+                        <HStack gap={2}>
                           <IconButton
                             aria-label="Edit product"
-                            icon={<FiEdit />}
                             size="sm"
                             onClick={() => handleEdit(product)}
-                          />
+                          >
+                            <FiEdit />
+                          </IconButton>
                           <IconButton
                             aria-label="Delete product"
-                            icon={<FiTrash2 />}
                             size="sm"
-                            colorScheme="red"
+                            colorPalette="red"
                             variant="ghost"
                             onClick={() => handleDelete(product.id)}
-                          />
+                          >
+                            <FiTrash2 />
+                          </IconButton>
                         </HStack>
                       </Table.Cell>
                     </Table.Row>
@@ -352,7 +379,11 @@ function ProductsPage() {
       </VStack>
 
       {/* Add/Edit Product Dialog */}
-      <Dialog.Root open={isOpen} onOpenChange={(e) => !e.open && onClose()} size="xl">
+      <Dialog.Root
+        open={open}
+        onOpenChange={(e) => !e.open && onClose()}
+        size="xl"
+      >
         <Dialog.Backdrop />
         <Dialog.Positioner>
           <Dialog.Content>
@@ -364,110 +395,158 @@ function ProductsPage() {
             </Dialog.Header>
             <form onSubmit={handleSubmit(onSubmit)}>
               <Dialog.Body>
-              <VStack spacing={4}>
-                <ChakraField.Root required invalid={!!errors.description}>
-                  <ChakraField.Label>Description</ChakraField.Label>
-                  <Textarea
-                    {...register("description", {
-                      required: "Description is required",
-                      maxLength: { value: 500, message: "Description too long" },
-                    })}
-                    placeholder="Enter product description"
-                    rows={3}
-                  />
-                </ChakraField.Root>
-
-                <Flex gap={4} w="full">
-                  <ChakraField.Root required invalid={!!errors.hs_code}>
-                    <ChakraField.Label>HS Code</ChakraField.Label>
-                    <Input
-                      {...register("hs_code", {
-                        required: "HS Code is required",
-                        maxLength: { value: 20, message: "HS Code too long" },
+                <VStack gap={4}>
+                  <ChakraField.Root required invalid={!!errors.description}>
+                    <ChakraField.Label>Description</ChakraField.Label>
+                    <Textarea
+                      {...register("description", {
+                        required: "Description is required",
+                        maxLength: {
+                          value: 500,
+                          message: "Description too long",
+                        },
                       })}
-                      placeholder="e.g., 8471.30.00"
+                      placeholder="Enter product description"
+                      rows={3}
                     />
+                    <ChakraField.ErrorText>
+                      {errors.description?.message}
+                    </ChakraField.ErrorText>
                   </ChakraField.Root>
 
-                  <ChakraField.Root required invalid={!!errors.uom}>
-                    <ChakraField.Label>Unit of Measure</ChakraField.Label>
-                    <Select
-                      {...register("uom", {
-                        required: "Unit of measure is required",
-                      })}
-                      placeholder="Select UOM"
-                    >
-                      {unitOfMeasures.map((uom) => (
-                        <option key={uom} value={uom}>
-                          {uom}
-                        </option>
-                      ))}
-                    </Select>
-                  </ChakraField.Root>
+                  <Flex gap={4} w="full">
+                    <ChakraField.Root required invalid={!!errors.hs_code}>
+                      <ChakraField.Label>HS Code</ChakraField.Label>
+                      <Input
+                        {...register("hs_code", {
+                          required: "HS Code is required",
+                          maxLength: { value: 20, message: "HS Code too long" },
+                        })}
+                        placeholder="e.g., 8471.30.00"
+                      />
+                      <ChakraField.ErrorText>
+                        {errors.hs_code?.message}
+                      </ChakraField.ErrorText>
+                    </ChakraField.Root>
 
-                 </Flex>
+                    <ChakraField.Root required invalid={!!errors.uom}>
+                      <ChakraField.Label>Unit of Measure</ChakraField.Label>
+                      <Controller
+                        name="uom"
+                        control={control}
+                        rules={{ required: "Unit of measure is required" }}
+                        render={({ field }) => (
+                          <Select
+                            value={field.value || ""}
+                            onChange={(e) => field.onChange(e.target.value)}
+                            onBlur={field.onBlur}
+                            name={field.name}
+                            placeholder="Select UOM"
+                          >
+                            {unitOfMeasures.map((uom) => (
+                              <option key={uom} value={uom}>
+                                {uom}
+                              </option>
+                            ))}
+                          </Select>
+                        )}
+                      />
+                      <ChakraField.ErrorText>
+                        {errors.uom?.message}
+                      </ChakraField.ErrorText>
+                    </ChakraField.Root>
+                  </Flex>
 
-                <Flex gap={4} w="full">
-                  <ChakraField.Root required invalid={!!errors.unit_price}>
-                    <ChakraField.Label>Unit Price (Rs.)</ChakraField.Label>
+                  <Flex gap={4} w="full">
+                    <ChakraField.Root required invalid={!!errors.unit_price}>
+                      <ChakraField.Label>Unit Price (Rs.)</ChakraField.Label>
+                      <Controller
+                        name="unit_price"
+                        control={control}
+                        rules={{
+                          required: "Unit price is required",
+                          min: { value: 0, message: "Price must be positive" },
+                        }}
+                        render={({ field }) => (
+                          <NumberInput.Root
+                            value={field.value?.toString() || ""}
+                            onValueChange={(details) =>
+                              field.onChange(details.valueAsNumber)
+                            }
+                            min={0}
+                            step={0.01}
+                            formatOptions={{
+                              style: "decimal",
+                              minimumFractionDigits: 2,
+                              maximumFractionDigits: 2,
+                            }}
+                          >
+                            <NumberInput.Input placeholder="0.00" />
+                            <NumberInput.Control />
+                          </NumberInput.Root>
+                        )}
+                      />
+                      <ChakraField.ErrorText>
+                        {errors.unit_price?.message}
+                      </ChakraField.ErrorText>
+                    </ChakraField.Root>
+
+                    <ChakraField.Root required invalid={!!errors.tax_rate}>
+                      <ChakraField.Label>Tax Rate</ChakraField.Label>
+                      <Controller
+                        name="tax_rate"
+                        control={control}
+                        rules={{ required: "Tax rate is required" }}
+                        render={({ field }) => (
+                          <Select
+                            value={field.value?.toString() || ""}
+                            onChange={(e) =>
+                              field.onChange(Number(e.target.value))
+                            }
+                            onBlur={field.onBlur}
+                            name={field.name}
+                            placeholder="Select tax rate"
+                          >
+                            {taxRates.map((rate) => (
+                              <option key={rate.value} value={rate.value}>
+                                {rate.label}
+                              </option>
+                            ))}
+                          </Select>
+                        )}
+                      />
+                      <ChakraField.ErrorText>
+                        {errors.tax_rate?.message}
+                      </ChakraField.ErrorText>
+                    </ChakraField.Root>
+                  </Flex>
+
+                  <ChakraField.Root required invalid={!!errors.sale_type}>
+                    <ChakraField.Label>Sale Type</ChakraField.Label>
                     <Controller
-                      name="unit_price"
+                      name="sale_type"
                       control={control}
-                      rules={{
-                        required: "Unit price is required",
-                        min: { value: 0, message: "Price must be positive" },
-                      }}
+                      rules={{ required: "Sale type is required" }}
                       render={({ field }) => (
-                        <NumberInput.Root
-                          {...field}
-                          min={0}
-                          step={0.01}
-                          formatOptions={{
-                            style: "decimal",
-                            minimumFractionDigits: 2,
-                            maximumFractionDigits: 2,
-                          }}
+                        <Select
+                          value={field.value || ""}
+                          onChange={(e) => field.onChange(e.target.value)}
+                          onBlur={field.onBlur}
+                          name={field.name}
+                          placeholder="Select sale type"
                         >
-                          <NumberInput.Input placeholder="0.00" />
-                          <NumberInput.Control />
-                        </NumberInput.Root>
+                          <option value="standard">Standard</option>
+                          <option value="export">Export</option>
+                          <option value="wholesale">Wholesale</option>
+                          <option value="retail">Retail</option>
+                        </Select>
                       )}
                     />
+                    <ChakraField.ErrorText>
+                      {errors.sale_type?.message}
+                    </ChakraField.ErrorText>
                   </ChakraField.Root>
-
-                   <ChakraField.Root required invalid={!!errors.tax_rate}>
-                    <ChakraField.Label>Tax Rate</ChakraField.Label>
-                    <Select
-                      {...register("tax_rate", {
-                        required: "Tax rate is required",
-                        valueAsNumber: true,
-                      })}
-                      placeholder="Select tax rate"
-                    >
-                      {taxRates.map((rate) => (
-                        <option key={rate.value} value={rate.value}>
-                          {rate.label}
-                        </option>
-                      ))}
-                    </Select>
-                  </ChakraField.Root>
-                </Flex>
-
-                <ChakraField.Root required invalid={!!errors.sale_type}>
-                  <ChakraField.Label>Sale Type</ChakraField.Label>
-                  <Select
-                    {...register("sale_type", {
-                      required: "Sale type is required",
-                    })}
-                    placeholder="Select sale type"
-                  >
-                    <option value="standard">Standard</option>
-                    <option value="export">Export</option>
-                    <option value="wholesale">Wholesale</option>
-                    <option value="retail">Retail</option>
-                  </Select>
-                </ChakraField.Root>
-              </VStack>
+                </VStack>
               </Dialog.Body>
               <Dialog.Footer>
                 <Button variant="ghost" mr={3} onClick={onClose}>
@@ -475,8 +554,12 @@ function ProductsPage() {
                 </Button>
                 <Button
                   type="submit"
-                  colorScheme="blue"
-                  isLoading={isSubmitting || createMutation.isPending || updateMutation.isPending}
+                  colorPalette="blue"
+                  loading={
+                    isSubmitting ||
+                    createMutation.isPending ||
+                    updateMutation.isPending
+                  }
                   loadingText={editingProduct ? "Updating..." : "Creating..."}
                 >
                   {editingProduct ? "Update" : "Create"}

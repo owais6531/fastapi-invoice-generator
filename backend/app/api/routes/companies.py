@@ -1,8 +1,7 @@
 from typing import Any
-from uuid import UUID
 
 from fastapi import APIRouter, HTTPException
-from sqlmodel import func, select
+from sqlmodel import select
 
 from app.api.deps import CurrentUser, SessionDep
 from app.models import (
@@ -44,7 +43,7 @@ def create_company(
         raise HTTPException(
             status_code=400, detail="User already has a company registered"
         )
-    
+
     company = Company.model_validate(company_in, update={"owner_id": current_user.id})
     session.add(company)
     session.commit()
@@ -63,7 +62,7 @@ def update_company(
     company = session.exec(statement).first()
     if not company:
         raise HTTPException(status_code=404, detail="Company not found")
-    
+
     update_dict = company_in.model_dump(exclude_unset=True)
     company.sqlmodel_update(update_dict)
     session.add(company)
@@ -83,7 +82,7 @@ def delete_company(
     company = session.exec(statement).first()
     if not company:
         raise HTTPException(status_code=404, detail="Company not found")
-    
+
     session.delete(company)
     session.commit()
     return Message(message="Company deleted successfully")

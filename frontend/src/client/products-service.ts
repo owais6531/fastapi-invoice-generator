@@ -2,6 +2,7 @@
 // This will be replaced with actual API integration
 
 import type { CancelablePromise } from "./core/CancelablePromise"
+import { OpenAPI } from "./core/OpenAPI"
 import { request as __request } from "./core/request"
 
 export interface ProductPublic {
@@ -61,8 +62,6 @@ export interface ProductUpdate {
   sale_type?: string
 }
 
-export type { ProductCreate, ProductUpdate }
-
 export class ProductsService {
   /**
    * Read Products
@@ -77,7 +76,7 @@ export class ProductsService {
     limit?: number
     search?: string
   } = {}): CancelablePromise<ProductsPublic> {
-    return __request({
+    return __request(OpenAPI, {
       method: "GET",
       url: "/api/v1/products/",
       query: {
@@ -100,7 +99,7 @@ export class ProductsService {
   }: {
     requestBody: ProductCreate
   }): CancelablePromise<ProductPublic> {
-    return __request({
+    return __request(OpenAPI, {
       method: "POST",
       url: "/api/v1/products/",
       body: requestBody,
@@ -120,7 +119,7 @@ export class ProductsService {
   }: {
     productId: string
   }): CancelablePromise<ProductPublic> {
-    return __request({
+    return __request(OpenAPI, {
       method: "GET",
       url: `/api/v1/products/${productId}`,
       errors: {
@@ -141,7 +140,7 @@ export class ProductsService {
     productId: string
     requestBody: ProductUpdate
   }): CancelablePromise<ProductPublic> {
-    return __request({
+    return __request(OpenAPI, {
       method: "PUT",
       url: `/api/v1/products/${productId}`,
       body: requestBody,
@@ -162,7 +161,7 @@ export class ProductsService {
   }: {
     productId: string
   }): CancelablePromise<{ message: string }> {
-    return __request({
+    return __request(OpenAPI, {
       method: "DELETE",
       url: `/api/v1/products/${productId}`,
       errors: {

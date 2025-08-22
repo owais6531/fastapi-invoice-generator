@@ -39,10 +39,16 @@ def get_user_by_email(*, session: Session, email: str) -> User | None:
 
 def authenticate(*, session: Session, email: str, password: str) -> User | None:
     db_user = get_user_by_email(session=session, email=email)
+    print(f"Authenticate: User found for {email}: {db_user is not None}")
     if not db_user:
+        print("Authenticate: No user found")
         return None
-    if not verify_password(password, db_user.hashed_password):
+    password_match = verify_password(password, db_user.hashed_password)
+    print(f"Authenticate: Password match: {password_match}")
+    if not password_match:
+        print("Authenticate: Password does not match")
         return None
+    print("Authenticate: Success")
     return db_user
 
 

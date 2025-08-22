@@ -1,9 +1,9 @@
 import axios from "axios"
 import type {
   AxiosError,
+  AxiosInstance,
   AxiosRequestConfig,
   AxiosResponse,
-  AxiosInstance,
 } from "axios"
 
 import { ApiError } from "./ApiError"
@@ -34,12 +34,15 @@ export const isSuccess = (status: number): boolean => {
 }
 
 export const base64 = (str: string): string => {
-  try {
+  // Browser environment
+  if (typeof btoa !== 'undefined') {
     return btoa(str)
-  } catch (err) {
-    // @ts-ignore
+  }
+  // Node.js environment
+  if (typeof Buffer !== 'undefined') {
     return Buffer.from(str).toString("base64")
   }
+  throw new Error("Base64 encoding not supported in this environment")
 }
 
 export const getQueryString = (params: Record<string, unknown>): string => {
@@ -57,15 +60,21 @@ export const getQueryString = (params: Record<string, unknown>): string => {
     if (value instanceof Date) {
       append(key, value.toISOString())
     } else if (Array.isArray(value)) {
-      value.forEach((v) => encodePair(key, v))
+      for (const v of value) {
+        encodePair(key, v)
+      }
     } else if (typeof value === "object") {
-      Object.entries(value).forEach(([k, v]) => encodePair(`${key}[${k}]`, v))
+      for (const [k, v] of Object.entries(value as Record<string, unknown>)) {
+        encodePair(`${key}[${k}]`, v)
+      }
     } else {
       append(key, value)
     }
   }
 
-  Object.entries(params).forEach(([key, value]) => encodePair(key, value))
+  for (const [key, value] of Object.entries(params)) {
+    encodePair(key, value)
+  }
 
   return qs.length ? `?${qs.join("&")}` : ""
 }
@@ -76,7 +85,10 @@ const getUrl = (config: OpenAPIConfig, options: ApiRequestOptions): string => {
   const path = options.url
     .replace("{api-version}", config.VERSION)
     .replace(/{(.*?)}/g, (substring: string, group: string) => {
-      if (options.path?.hasOwnProperty(group)) {
+      if (
+        options.path &&
+        Object.prototype.hasOwnProperty.call(options.path, group)
+      ) {
         return encoder(String(options.path[group]))
       }
       return substring
@@ -100,15 +112,19 @@ export const getFormData = (
       }
     }
 
-    Object.entries(options.formData)
-      .filter(([, value]) => value !== undefined && value !== null)
-      .forEach(([key, value]) => {
-        if (Array.isArray(value)) {
-          value.forEach((v) => process(key, v))
-        } else {
-          process(key, value)
+    const filtered = Object.entries(options.formData).filter(
+      ([, value]) => value !== undefined && value !== null,
+    )
+
+    for (const [key, value] of filtered) {
+      if (Array.isArray(value)) {
+        for (const v of value) {
+          process(key, v)
         }
-      })
+      } else {
+        process(key, value)
+      }
+    }
 
     return formData
   }
@@ -132,37 +148,36 @@ export const getHeaders = async <T>(
   options: ApiRequestOptions<T>,
 ): Promise<Record<string, string>> => {
   const [token, username, password, additionalHeaders] = await Promise.all([
-    // @ts-ignore
-    resolve(options, config.TOKEN),
-    // @ts-ignore
-    resolve(options, config.USERNAME),
-    // @ts-ignore
-    resolve(options, config.PASSWORD),
-    // @ts-ignore
-    resolve(options, config.HEADERS),
-  ])
+    resolve(options as any, config.TOKEN as string | Resolver<string> | undefined),
+    resolve(options as any, config.USERNAME as string | Resolver<string> | undefined),
+    resolve(options as any, config.PASSWORD as string | Resolver<string> | undefined),
+    resolve(
+      options as any,
+      config.HEADERS as
+        | Record<string, string>
+        | Resolver<Record<string, string>>
+        | undefined,
+    ),
+  ]) as [string | undefined, string | undefined, string | undefined, Record<string, string> | undefined]
 
-  const headers = Object.entries({
+  const headers: Record<string, string> = {}
+  const entries = Object.entries({
     Accept: "application/json",
     ...additionalHeaders,
     ...options.headers,
-  })
-    .filter(([, value]) => value !== undefined && value !== null)
-    .reduce(
-      (headers, [key, value]) => ({
-        ...headers,
-        [key]: String(value),
-      }),
-      {} as Record<string, string>,
-    )
+  }).filter(([, value]) => value !== undefined && value !== null)
+
+  for (const [key, value] of entries) {
+    headers[key] = String(value)
+  }
 
   if (isStringWithValue(token)) {
-    headers["Authorization"] = `Bearer ${token}`
+    headers.Authorization = `Bearer ${token}`
   }
 
   if (isStringWithValue(username) && isStringWithValue(password)) {
     const credentials = base64(`${username}:${password}`)
-    headers["Authorization"] = `Basic ${credentials}`
+    headers.Authorization = `Basic ${credentials}`
   }
 
   if (options.body !== undefined) {

@@ -2,6 +2,7 @@
 // This will be replaced with actual API integration
 
 import type { CancelablePromise } from "./core/CancelablePromise"
+import { OpenAPI } from "./core/OpenAPI"
 import { request as __request } from "./core/request"
 
 export interface CompanyPublic {
@@ -46,12 +47,25 @@ export interface CompanyUpdate {
   logo_url?: string
 }
 
-export type { CompanyUpdate }
-
 export class CompaniesService {
   /**
+   * Read Company
+   * Retrieve company for the current user.
+   */
+  public static readCompany(): CancelablePromise<CompanyPublic> {
+    return __request(OpenAPI, {
+      method: "GET",
+      url: "/api/v1/companies/",
+      errors: {
+        404: "Not Found",
+        422: "Validation Error",
+      },
+    })
+  }
+
+  /**
    * Read Companies
-   * Retrieve companies for the current user.
+   * Retrieve companies for the current user (wrapper for compatibility).
    */
   public static readCompanies({
     skip = 0,
@@ -60,17 +74,19 @@ export class CompaniesService {
     skip?: number
     limit?: number
   } = {}): CancelablePromise<CompaniesPublic> {
-    return __request({
+    // Since backend only supports one company per user, we wrap the single company response
+    // Note: skip and limit parameters are ignored since we only have one company
+    void skip; void limit; // Suppress unused parameter warnings
+    return __request(OpenAPI, {
       method: "GET",
-      url: "/api/v1/companies/",
-      query: {
-        skip,
-        limit,
-      },
+      url: "/api/v1/companies/me",
       errors: {
         422: "Validation Error",
       },
-    })
+    }).then((company: unknown): CompaniesPublic => ({
+      data: [company as CompanyPublic],
+      count: 1,
+    })) as CancelablePromise<CompaniesPublic>
   }
 
   /**
@@ -82,7 +98,7 @@ export class CompaniesService {
   }: {
     requestBody: CompanyCreate
   }): CancelablePromise<CompanyPublic> {
-    return __request({
+    return __request(OpenAPI, {
       method: "POST",
       url: "/api/v1/companies/",
       body: requestBody,
@@ -93,39 +109,20 @@ export class CompaniesService {
     })
   }
 
-  /**
-   * Read Company
-   * Get company by ID.
-   */
-  public static readCompany({
-    companyId,
-  }: {
-    companyId: string
-  }): CancelablePromise<CompanyPublic> {
-    return __request({
-      method: "GET",
-      url: `/api/v1/companies/${companyId}`,
-      errors: {
-        404: "Not Found",
-        422: "Validation Error",
-      },
-    })
-  }
+
 
   /**
    * Update Company
-   * Update a company.
+   * Update the current user's company.
    */
   public static updateCompany({
-    companyId,
     requestBody,
   }: {
-    companyId: string
     requestBody: CompanyUpdate
   }): CancelablePromise<CompanyPublic> {
-    return __request({
+    return __request(OpenAPI, {
       method: "PUT",
-      url: `/api/v1/companies/${companyId}`,
+      url: "/api/v1/companies/",
       body: requestBody,
       mediaType: "application/json",
       errors: {
@@ -137,16 +134,12 @@ export class CompaniesService {
 
   /**
    * Delete Company
-   * Delete a company.
+   * Delete the current user's company.
    */
-  public static deleteCompany({
-    companyId,
-  }: {
-    companyId: string
-  }): CancelablePromise<{ message: string }> {
-    return __request({
+  public static deleteCompany(): CancelablePromise<{ message: string }> {
+    return __request(OpenAPI, {
       method: "DELETE",
-      url: `/api/v1/companies/${companyId}`,
+      url: "/api/v1/companies/",
       errors: {
         404: "Not Found",
         422: "Validation Error",

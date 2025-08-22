@@ -8,7 +8,12 @@
       "node_modules",
       "src/routeTree.gen.ts",
       "playwright.config.ts",
-      "playwright-report"
+      "playwright-report",
+      "src/client/sdk.gen.ts",
+      "src/client/fbr-service.ts",
+      "src/client/customers-service.ts",
+      "src/client/companies-service.ts",
+      "src/client/products-service.ts"
     ]
   },
   "linter": {

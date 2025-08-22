@@ -1,4 +1,4 @@
-import { Table } from "@chakra-ui/react"
+import { Table } from "@/components/ui/table"
 import { SkeletonText } from "../ui/skeleton"
 
 const PendingItems = () => (

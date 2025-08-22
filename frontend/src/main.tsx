@@ -5,7 +5,7 @@ import {
   QueryClientProvider,
 } from "@tanstack/react-query"
 import { RouterProvider, createRouter } from "@tanstack/react-router"
-import React, { StrictMode } from "react"
+import { StrictMode } from "react"
 import ReactDOM from "react-dom/client"
 import { routeTree } from "./routeTree.gen"
 
@@ -16,6 +16,22 @@ OpenAPI.BASE = import.meta.env.VITE_API_URL
 OpenAPI.TOKEN = async () => {
   return localStorage.getItem("access_token") || ""
 }
+// Ensure x-www-form-urlencoded requests are properly encoded
+OpenAPI.interceptors.request.use((config) => {
+  const headers = (config.headers || {}) as Record<string, string>
+  const contentType = headers["Content-Type"] || headers["content-type"]
+  if (
+    contentType === "application/x-www-form-urlencoded" &&
+    config.data instanceof FormData
+  ) {
+    const params = new URLSearchParams()
+    for (const [key, value] of (config.data as FormData).entries()) {
+      params.append(key, typeof value === "string" ? value : String(value))
+    }
+    config.data = params
+  }
+  return config
+})
 
 const handleApiError = (error: Error) => {
   if (error instanceof ApiError && [401, 403].includes(error.status)) {

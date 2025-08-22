@@ -1,8 +1,9 @@
+import os
+
 from fastapi import APIRouter, Form
 from fastapi.responses import FileResponse, HTMLResponse
-from typing import List
+
 from app.services.invoice_pdf import generate_invoice_pdf
-import os
 
 router = APIRouter()
 
@@ -11,11 +12,11 @@ async def generate_invoice(
     client_name: str = Form(...),
     client_phone: str = Form(""),
     client_email: str = Form(""),
-    service_description: List[str] = Form(...),
-    quantity: List[int] = Form(...),
-    unit_price: List[float] = Form(...),
+    service_description: list[str] = Form(...),
+    quantity: list[int] = Form(...),
+    unit_price: list[float] = Form(...),
     notes: str = Form("")
-):
+) -> str:
     filename = generate_invoice_pdf(
         client_name=client_name,
         client_phone=client_phone,
@@ -33,6 +34,6 @@ async def generate_invoice(
     """
 
 @router.get("/invoice/download/{filename}", response_class=FileResponse, tags=["invoice"])
-async def download_invoice(filename: str):
+async def download_invoice(filename: str) -> FileResponse:
     file_path = os.path.join(os.path.dirname(__file__), "..", "..", "generated", filename)
     return FileResponse(path=file_path, filename=filename)

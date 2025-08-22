@@ -13,7 +13,7 @@ export default defineConfig({
   plugins: [react(), TanStackRouterVite()],
   server: {
     proxy: {
-      '/api': 'http://localhost:8000',
+      "/api": "http://localhost:8000",
     },
   },
 })

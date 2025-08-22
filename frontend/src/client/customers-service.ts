@@ -2,6 +2,7 @@
 // This will be replaced with actual API integration
 
 import type { CancelablePromise } from "./core/CancelablePromise"
+import { OpenAPI } from "./core/OpenAPI"
 import { request as __request } from "./core/request"
 
 export interface CustomerPublic {
@@ -46,8 +47,6 @@ export interface CustomerUpdate {
   email?: string
 }
 
-export type { CustomerCreate, CustomerUpdate }
-
 export class CustomersService {
   /**
    * Read Customers
@@ -62,7 +61,7 @@ export class CustomersService {
     limit?: number
     search?: string
   } = {}): CancelablePromise<CustomersPublic> {
-    return __request({
+    return __request(OpenAPI, {
       method: "GET",
       url: "/api/v1/customers/",
       query: {
@@ -85,7 +84,7 @@ export class CustomersService {
   }: {
     requestBody: CustomerCreate
   }): CancelablePromise<CustomerPublic> {
-    return __request({
+    return __request(OpenAPI, {
       method: "POST",
       url: "/api/v1/customers/",
       body: requestBody,
@@ -105,7 +104,7 @@ export class CustomersService {
   }: {
     customerId: string
   }): CancelablePromise<CustomerPublic> {
-    return __request({
+    return __request(OpenAPI, {
       method: "GET",
       url: `/api/v1/customers/${customerId}`,
       errors: {
@@ -126,7 +125,7 @@ export class CustomersService {
     customerId: string
     requestBody: CustomerUpdate
   }): CancelablePromise<CustomerPublic> {
-    return __request({
+    return __request(OpenAPI, {
       method: "PUT",
       url: `/api/v1/customers/${customerId}`,
       body: requestBody,
@@ -147,7 +146,7 @@ export class CustomersService {
   }: {
     customerId: string
   }): CancelablePromise<{ message: string }> {
-    return __request({
+    return __request(OpenAPI, {
       method: "DELETE",
       url: `/api/v1/customers/${customerId}`,
       errors: {

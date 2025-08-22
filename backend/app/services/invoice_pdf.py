@@ -1,17 +1,24 @@
-from fpdf import FPDF
-from datetime import datetime
 import os
-from typing import List
+from datetime import datetime
+
+from fpdf import FPDF
+
 
 def generate_invoice_pdf(
     client_name: str,
     client_phone: str = "",
     client_email: str = "",
-    service_description: List[str] = [],
-    quantity: List[int] = [],
-    unit_price: List[float] = [],
+    service_description: list[str] | None = None,
+    quantity: list[int] | None = None,
+    unit_price: list[float] | None = None,
     notes: str = ""
 ) -> str:
+    if service_description is None:
+        service_description = []
+    if quantity is None:
+        quantity = []
+    if unit_price is None:
+        unit_price = []
     subtotal = 0
     line_totals = []
     for i in range(len(service_description)):

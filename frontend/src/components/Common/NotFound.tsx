@@ -1,4 +1,5 @@
-import { Button, Center, Flex, Text } from "@chakra-ui/react"
+import { Button } from "@/components/ui/button"
+import { Center, Flex, Text } from "@chakra-ui/react"
 import { Link } from "@tanstack/react-router"
 
 const NotFound = () => {
@@ -41,7 +42,7 @@ const NotFound = () => {
           <Link to="/">
             <Button
               variant="solid"
-              colorScheme="teal"
+              colorPalette="teal"
               mt={4}
               alignSelf="center"
             >

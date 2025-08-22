@@ -1,40 +1,37 @@
+import { Button } from "@/components/ui/button"
+import { Card, CardBody } from "@/components/ui/card"
+import { InputGroup } from "@/components/ui/input-group"
+import { Select } from "@/components/ui/select"
+import { toaster } from "@/components/ui/toaster"
 import {
   Badge,
-  Box,
-  Button,
+  Field as ChakraField,
   Container,
   Dialog,
-  Field as ChakraField,
   Flex,
+  HStack,
   Heading,
+  IconButton,
   Input,
   Table,
   Text,
-  useDisclosure,
-  VStack,
-  Card,
-  CardBody,
-  HStack,
-  IconButton,
-  Select,
   Textarea,
-} from "@chakra-ui/react";
-import { InputGroup } from "@/components/ui/input-group";
-import { toaster } from "@/components/ui/toaster";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
-import { createFileRoute } from "@tanstack/react-router"
-import { useForm } from "react-hook-form"
+  VStack,
+  useDisclosure,
+} from "@chakra-ui/react"
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import { createFileRoute, useNavigate } from "@tanstack/react-router"
 import { useState } from "react"
-import { FiSearch, FiPlus, FiEdit, FiTrash2 } from "react-icons/fi"
+import { useForm } from "react-hook-form"
+import { FiEdit, FiPlus, FiSearch, FiTrash2 } from "react-icons/fi"
 import { z } from "zod"
 
-import { type ApiError } from "@/client"
+import type { ApiError } from "@/client"
 import {
   type CustomerPublic,
-  type CustomerCreate,
   type CustomerUpdate,
   CustomersService,
-} from "@/client/customers-service"
+} from "@/client"
 
 interface CustomerFormData {
   business_name: string
@@ -69,19 +66,23 @@ const customersSearchSchema = z.object({
 
 const PER_PAGE = 10
 
-export const Route = createFileRoute("/_layout/customers")({ 
-  component: CustomersPage,
+export const Route = createFileRoute("/_layout/customers")({
+  component: () => <CustomersPage />,
   validateSearch: customersSearchSchema,
 })
 
 function CustomersPage() {
   const { page = 1, search = "" } = Route.useSearch()
-  const navigate = Route.useNavigate()
+  const navigate = useNavigate({ from: Route.fullPath })
   const queryClient = useQueryClient()
 
-  const { isOpen, onOpen, onClose } = useDisclosure()
-  const [editingCustomer, setEditingCustomer] = useState<CustomerPublic | null>(null)
+  const { open, onOpen, onClose } = useDisclosure()
+  const [editingCustomer, setEditingCustomer] = useState<CustomerPublic | null>(
+    null,
+  )
   const [searchTerm, setSearchTerm] = useState(search)
+
+  // Use ChakraField components directly
 
   const {
     register,
@@ -96,12 +97,16 @@ function CustomersPage() {
     isLoading,
     isError,
   } = useQuery({
-    queryKey: ["customers", { skip: (page - 1) * PER_PAGE, limit: PER_PAGE, search }],
-    queryFn: () => CustomersService.readCustomers({
-      skip: (page - 1) * PER_PAGE,
-      limit: PER_PAGE,
-      search: search,
-    }),
+    queryKey: [
+      "customers",
+      { skip: (page - 1) * PER_PAGE, limit: PER_PAGE, search },
+    ],
+    queryFn: () =>
+      CustomersService.readCustomers({
+        skip: (page - 1) * PER_PAGE,
+        limit: PER_PAGE,
+        search: search,
+      }),
   })
 
   // Mutation to create customer
@@ -130,8 +135,17 @@ function CustomersPage() {
 
   // Mutation to update customer
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }: { id: string; data: CustomerFormData }) =>
-      CustomersService.updateCustomer({ id, requestBody: data as CustomerUpdate }),
+    mutationFn: ({
+      id,
+      data,
+    }: {
+      id: string
+      data: CustomerFormData
+    }) =>
+      CustomersService.updateCustomer({
+        customerId: id,
+        requestBody: data as CustomerUpdate,
+      }),
     onSuccess: () => {
       toaster.create({
         title: "Success",
@@ -154,7 +168,7 @@ function CustomersPage() {
 
   // Mutation to delete customer
   const deleteMutation = useMutation({
-    mutationFn: (id: string) => CustomersService.deleteCustomer({ id }),
+    mutationFn: (id: string) => CustomersService.deleteCustomer({ customerId: id }),
     onSuccess: () => {
       toaster.create({
         title: "Success",
@@ -216,10 +230,11 @@ function CustomersPage() {
 
   return (
     <Container maxW="7xl" py={8}>
-      <VStack spacing={6} align="stretch">
+      <VStack gap={6} align="stretch">
         <Flex justify="space-between" align="center">
           <Heading size="lg">Customer Management</Heading>
-          <Button leftIcon={<FiPlus />} colorScheme="blue" onClick={handleAdd}>
+          <Button colorPalette="blue" onClick={handleAdd}>
+            <FiPlus />
             Add Customer
           </Button>
         </Flex>
@@ -249,7 +264,7 @@ function CustomersPage() {
             ) : isError ? (
               <Text color="red.500">Error loading customers</Text>
             ) : (
-              <Table.Root variant="simple">
+              <Table.Root>
                 <Table.Header>
                   <Table.Row>
                     <Table.ColumnHeader>Business Name</Table.ColumnHeader>
@@ -261,10 +276,12 @@ function CustomersPage() {
                   </Table.Row>
                 </Table.Header>
                 <Table.Body>
-                  {customers?.data.map((customer) => (
+                  {customers?.data.map((customer: CustomerPublic) => (
                     <Table.Row key={customer.id}>
                       <Table.Cell>
-                        <Text fontWeight="medium">{customer.business_name}</Text>
+                        <Text fontWeight="medium">
+                          {customer.business_name}
+                        </Text>
                       </Table.Cell>
                       <Table.Cell>{customer.ntn_cnic}</Table.Cell>
                       <Table.Cell>
@@ -274,33 +291,43 @@ function CustomersPage() {
                       </Table.Cell>
                       <Table.Cell>
                         <Badge
-                          colorScheme={customer.registration_type === "Registered" ? "green" : "orange"}
+                          colorScheme={
+                            customer.registration_type === "Registered"
+                              ? "green"
+                              : "orange"
+                          }
                         >
                           {customer.registration_type}
                         </Badge>
                       </Table.Cell>
                       <Table.Cell>
-                        <VStack align="start" spacing={0}>
-                          {customer.phone && <Text fontSize="sm">{customer.phone}</Text>}
-                          {customer.email && <Text fontSize="sm">{customer.email}</Text>}
+                        <VStack align="start" gap={0}>
+                          {customer.phone && (
+                            <Text fontSize="sm">{customer.phone}</Text>
+                          )}
+                          {customer.email && (
+                            <Text fontSize="sm">{customer.email}</Text>
+                          )}
                         </VStack>
                       </Table.Cell>
                       <Table.Cell>
-                        <HStack spacing={2}>
+                        <HStack gap={2}>
                           <IconButton
                             aria-label="Edit customer"
-                            icon={<FiEdit />}
                             size="sm"
                             onClick={() => handleEdit(customer)}
-                          />
+                          >
+                            <FiEdit />
+                          </IconButton>
                           <IconButton
                             aria-label="Delete customer"
-                            icon={<FiTrash2 />}
                             size="sm"
-                            colorScheme="red"
+                            colorPalette="red"
                             variant="ghost"
                             onClick={() => handleDelete(customer.id)}
-                          />
+                          >
+                            <FiTrash2 />
+                          </IconButton>
                         </HStack>
                       </Table.Cell>
                     </Table.Row>
@@ -319,7 +346,11 @@ function CustomersPage() {
       </VStack>
 
       {/* Add/Edit Customer Dialog */}
-      <Dialog.Root open={isOpen} onOpenChange={(e) => !e.open && onClose()} size="xl">
+      <Dialog.Root
+        open={open}
+        onOpenChange={(e) => !e.open && onClose()}
+        size="xl"
+      >
         <Dialog.Backdrop />
         <Dialog.Positioner>
           <Dialog.Content>
@@ -331,112 +362,164 @@ function CustomersPage() {
             </Dialog.Header>
             <form onSubmit={handleSubmit(onSubmit)}>
               <Dialog.Body>
-              <VStack spacing={4}>
-                <ChakraField.Root required invalid={!!errors.business_name}>
-                  <ChakraField.Label>Business Name</ChakraField.Label>
-                  <Input
-                    {...register("business_name", {
-                      required: "Business name is required",
-                      maxLength: { value: 255, message: "Business name too long" },
-                    })}
-                    placeholder="Enter business name"
-                  />
-                </ChakraField.Root>
-
-                <ChakraField.Root required invalid={!!errors.ntn_cnic}>
-                  <ChakraField.Label>NTN/CNIC</ChakraField.Label>
-                  <Input
-                    {...register("ntn_cnic", {
-                      required: "NTN/CNIC is required",
-                      maxLength: { value: 50, message: "NTN/CNIC too long" },
-                    })}
-                    placeholder="Enter NTN or CNIC"
-                  />
-                </ChakraField.Root>
-
-                 <Flex gap={4} w="full">
-                  <ChakraField.Root required invalid={!!errors.province}>
-                    <ChakraField.Label>Province</ChakraField.Label>
-                    <Select
-                      {...register("province", {
-                        required: "Province is required",
+                <VStack gap={4}>
+                  <ChakraField.Root required invalid={!!errors.business_name}>
+                    <ChakraField.Label>Business Name</ChakraField.Label>
+                    <Input
+                      {...register("business_name", {
+                        required: "Business name is required",
+                        maxLength: {
+                          value: 255,
+                          message: "Business name too long",
+                        },
                       })}
-                      placeholder="Select province"
+                      placeholder="Enter business name"
+                    />
+                    {errors.business_name && (
+                      <ChakraField.ErrorText>
+                        {errors.business_name.message}
+                      </ChakraField.ErrorText>
+                    )}
+                  </ChakraField.Root>
+
+                  <ChakraField.Root required invalid={!!errors.ntn_cnic}>
+                    <ChakraField.Label>NTN/CNIC</ChakraField.Label>
+                    <Input
+                      {...register("ntn_cnic", {
+                        required: "NTN/CNIC is required",
+                        maxLength: { value: 50, message: "NTN/CNIC too long" },
+                      })}
+                      placeholder="Enter NTN or CNIC"
+                    />
+                    {errors.ntn_cnic && (
+                      <ChakraField.ErrorText>
+                        {errors.ntn_cnic.message}
+                      </ChakraField.ErrorText>
+                    )}
+                  </ChakraField.Root>
+
+                  <Flex gap={4} w="full">
+                    <ChakraField.Root required invalid={!!errors.province}>
+                      <ChakraField.Label>Province</ChakraField.Label>
+                      <Select
+                        {...register("province", {
+                          required: "Province is required",
+                        })}
+                        placeholder="Select province"
+                      >
+                        {provinces.map((province) => (
+                          <option key={province} value={province}>
+                            {province}
+                          </option>
+                        ))}
+                      </Select>
+                      {errors.province && (
+                        <ChakraField.ErrorText>
+                          {errors.province.message}
+                        </ChakraField.ErrorText>
+                      )}
+                    </ChakraField.Root>
+
+                    <ChakraField.Root required invalid={!!errors.city}>
+                      <ChakraField.Label>City</ChakraField.Label>
+                      <Input
+                        {...register("city", {
+                          required: "City is required",
+                          maxLength: {
+                            value: 100,
+                            message: "City name too long",
+                          },
+                        })}
+                        placeholder="Enter city"
+                      />
+                      {errors.city && (
+                        <ChakraField.ErrorText>
+                          {errors.city.message}
+                        </ChakraField.ErrorText>
+                      )}
+                    </ChakraField.Root>
+                  </Flex>
+
+                  <ChakraField.Root required invalid={!!errors.address}>
+                    <ChakraField.Label>Address</ChakraField.Label>
+                    <Textarea
+                      {...register("address", {
+                        required: "Address is required",
+                        maxLength: { value: 500, message: "Address too long" },
+                      })}
+                      placeholder="Enter complete address"
+                      rows={3}
+                    />
+                    {errors.address && (
+                      <ChakraField.ErrorText>
+                        {errors.address.message}
+                      </ChakraField.ErrorText>
+                    )}
+                  </ChakraField.Root>
+
+                  <ChakraField.Root
+                    required
+                    invalid={!!errors.registration_type}
+                  >
+                    <ChakraField.Label>Registration Type</ChakraField.Label>
+                    <Select
+                      {...register("registration_type", {
+                        required: "Registration type is required",
+                      })}
+                      placeholder="Select registration type"
                     >
-                      {provinces.map((province) => (
-                        <option key={province} value={province}>
-                          {province}
+                      {registrationTypes.map((type) => (
+                        <option key={type.value} value={type.value}>
+                          {type.label}
                         </option>
                       ))}
                     </Select>
+                    {errors.registration_type && (
+                      <ChakraField.ErrorText>
+                        {errors.registration_type.message}
+                      </ChakraField.ErrorText>
+                    )}
                   </ChakraField.Root>
 
-                   <ChakraField.Root required invalid={!!errors.city}>
-                    <ChakraField.Label>City</ChakraField.Label>
-                    <Input
-                      {...register("city", {
-                        required: "City is required",
-                        maxLength: { value: 100, message: "City name too long" },
-                      })}
-                      placeholder="Enter city"
-                    />
-                  </ChakraField.Root>
-                 </Flex>
+                  <Flex gap={4} w="full">
+                    <ChakraField.Root invalid={!!errors.phone}>
+                      <ChakraField.Label>Phone (Optional)</ChakraField.Label>
+                      <Input
+                        {...register("phone", {
+                          maxLength: {
+                            value: 20,
+                            message: "Phone number too long",
+                          },
+                        })}
+                        placeholder="Enter phone number"
+                      />
+                      {errors.phone && (
+                        <ChakraField.ErrorText>
+                          {errors.phone.message}
+                        </ChakraField.ErrorText>
+                      )}
+                    </ChakraField.Root>
 
-                <ChakraField.Root required invalid={!!errors.address}>
-                  <ChakraField.Label>Address</ChakraField.Label>
-                  <Textarea
-                    {...register("address", {
-                      required: "Address is required",
-                      maxLength: { value: 500, message: "Address too long" },
-                    })}
-                    placeholder="Enter complete address"
-                    rows={3}
-                  />
-                </ChakraField.Root>
-
-                 <ChakraField.Root required invalid={!!errors.registration_type}>
-                  <ChakraField.Label>Registration Type</ChakraField.Label>
-                  <Select
-                    {...register("registration_type", {
-                      required: "Registration type is required",
-                    })}
-                    placeholder="Select registration type"
-                  >
-                    {registrationTypes.map((type) => (
-                      <option key={type.value} value={type.value}>
-                        {type.label}
-                      </option>
-                    ))}
-                  </Select>
-                </ChakraField.Root>
-
-                 <Flex gap={4} w="full">
-                  <ChakraField.Root invalid={!!errors.phone}>
-                    <ChakraField.Label>Phone (Optional)</ChakraField.Label>
-                    <Input
-                      {...register("phone", {
-                        maxLength: { value: 20, message: "Phone number too long" },
-                      })}
-                      placeholder="Enter phone number"
-                    />
-                  </ChakraField.Root>
-
-                   <ChakraField.Root invalid={!!errors.email}>
-                    <ChakraField.Label>Email (Optional)</ChakraField.Label>
-                    <Input
-                      type="email"
-                      {...register("email", {
-                        pattern: {
-                          value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                          message: "Invalid email address",
-                        },
-                      })}
-                      placeholder="Enter email address"
-                    />
-                  </ChakraField.Root>
-                 </Flex>
-              </VStack>
+                    <ChakraField.Root invalid={!!errors.email}>
+                      <ChakraField.Label>Email (Optional)</ChakraField.Label>
+                      <Input
+                        type="email"
+                        {...register("email", {
+                          pattern: {
+                            value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+                            message: "Invalid email address",
+                          },
+                        })}
+                        placeholder="Enter email address"
+                      />
+                      {errors.email && (
+                        <ChakraField.ErrorText>
+                          {errors.email.message}
+                        </ChakraField.ErrorText>
+                      )}
+                    </ChakraField.Root>
+                  </Flex>
+                </VStack>
               </Dialog.Body>
               <Dialog.Footer>
                 <Button variant="ghost" mr={3} onClick={onClose}>
@@ -444,8 +527,12 @@ function CustomersPage() {
                 </Button>
                 <Button
                   type="submit"
-                  colorScheme="blue"
-                  isLoading={isSubmitting || createMutation.isPending || updateMutation.isPending}
+                  colorPalette="blue"
+                  loading={
+                    isSubmitting ||
+                    createMutation.isPending ||
+                    updateMutation.isPending
+                  }
                   loadingText={editingCustomer ? "Updating..." : "Creating..."}
                 >
                   {editingCustomer ? "Update" : "Create"}

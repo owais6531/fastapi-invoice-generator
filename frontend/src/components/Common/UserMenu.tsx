@@ -1,4 +1,5 @@
-import { Box, Button, Flex, Text } from "@chakra-ui/react"
+import { Button } from "@/components/ui/button"
+import { Box, Flex, Text } from "@chakra-ui/react"
 import { Link } from "@tanstack/react-router"
 import { FaUserAstronaut } from "react-icons/fa"
 import { FiLogOut, FiUser } from "react-icons/fi"
@@ -26,7 +27,7 @@ const UserMenu = () => {
           </MenuTrigger>
 
           <MenuContent>
-            <Link to="settings">
+            <Link to="/settings">
               <MenuItem
                 closeOnSelect
                 value="user-settings"

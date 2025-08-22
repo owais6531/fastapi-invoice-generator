@@ -1,4 +1,5 @@
-import { Box, Button, Container, Heading, VStack } from "@chakra-ui/react"
+import { Button } from "@/components/ui/button"
+import { Box, Container, Heading, VStack } from "@chakra-ui/react"
 import { useMutation } from "@tanstack/react-query"
 import { type SubmitHandler, useForm } from "react-hook-form"
 import { FiLock } from "react-icons/fi"

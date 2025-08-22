@@ -1,32 +1,30 @@
+import { Button } from "@/components/ui/button"
+import { Card, CardBody } from "@/components/ui/card"
+import { Select } from "@/components/ui/select"
 import {
   Box,
-  Button,
-  Container,
   Field as ChakraField,
+  Container,
+  Flex,
   Heading,
+  Image,
   Input,
   Stack,
+  Text,
   Textarea,
   VStack,
-  Card,
-  CardBody,
-  Select,
-  Image,
-  Text,
-  Flex,
 } from "@chakra-ui/react"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { createFileRoute } from "@tanstack/react-router"
+import { useEffect, useState } from "react"
 import { useForm } from "react-hook-form"
-import { useState } from "react"
 
-import { type ApiError } from "@/client"
+import type { ApiError } from "@/client"
 import { toaster } from "@/components/ui/toaster"
 
 import {
-  type CompanyPublic,
-  type CompanyUpdate,
   CompaniesService,
+  type CompanyUpdate,
 } from "@/client/companies-service"
 
 interface CompanyFormData {
@@ -50,15 +48,26 @@ const provinces = [
   "Azad Jammu and Kashmir",
 ]
 
-export const Route = createFileRoute("/_layout/company")({ 
+export const Route = createFileRoute("/_layout/company")({
   component: CompanyProfile,
 })
 
 function CompanyProfile() {
   const queryClient = useQueryClient()
 
-  const [logoFile, setLogoFile] = useState<File | null>(null)
+  const [, setLogoFile] = useState<File | null>(null)
   const [logoPreview, setLogoPreview] = useState<string | null>(null)
+
+  // Query to get company data
+  const {
+    data: company,
+    isLoading,
+  } = useQuery({
+    queryKey: ["company"],
+    queryFn: () => CompaniesService.readCompany(),
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 10 * 60 * 1000, // 10 minutes
+  })
 
   const {
     register,
@@ -67,35 +76,40 @@ function CompanyProfile() {
     formState: { errors, isSubmitting },
   } = useForm<CompanyFormData>()
 
-  // Query to get company data
-  const {
-    data: company,
-    isLoading,
-    isError,
-  } = useQuery({
-    queryKey: ["company"],
-    queryFn: () => CompaniesService.readCompanies({ skip: 0, limit: 1 }),
-    select: (data) => data.data[0] || null,
-  })
+  // Reset form when company data is loaded
+  useEffect(() => {
+    if (company) {
+      reset({
+        business_name: company.business_name || "",
+        ntn_cnic: company.ntn_cnic || "",
+        province: company.province || "",
+        city: company.city || "",
+        address: company.address || "",
+        phone: company.phone || "",
+        email: company.email || "",
+        logo_url: company.logo_url || "",
+      })
+    }
+  }, [company, reset])
 
   // Mutation to create/update company
   const mutation = useMutation({
     mutationFn: (data: CompanyFormData) => {
       if (company?.id) {
         return CompaniesService.updateCompany({
-          companyId: company.id,
           requestBody: data as CompanyUpdate,
         })
-      } else {
-        return CompaniesService.createCompany({
-          requestBody: data,
-        })
       }
+      return CompaniesService.createCompany({
+        requestBody: data,
+      })
     },
     onSuccess: () => {
       toaster.create({
         title: "Success",
-        description: company?.id ? "Company updated successfully" : "Company created successfully",
+        description: company?.id
+          ? "Company updated successfully"
+          : "Company created successfully",
         type: "success",
       })
       queryClient.invalidateQueries({ queryKey: ["company"] })
@@ -135,20 +149,25 @@ function CompanyProfile() {
 
   return (
     <Container maxW="4xl" py={8}>
-      <VStack spacing={8} align="stretch">
+      <VStack gap={8} align="stretch">
         <Heading size="lg">Company Profile</Heading>
         <Text color="gray.600">
-          Manage your business information for FBR invoicing. This information will be used as seller details in all invoices.
+          Manage your business information for FBR invoicing. This information
+          will be used as seller details in all invoices.
         </Text>
 
         <Card>
           <CardBody>
             <form onSubmit={handleSubmit(onSubmit)}>
-              <VStack spacing={6} align="stretch">
+              <VStack gap={6} align="stretch">
                 {/* Logo Upload Section */}
                 <ChakraField.Root>
                   <ChakraField.Label>Company Logo</ChakraField.Label>
-                  <Flex direction={{ base: "column", md: "row" }} gap={4} align="center">
+                  <Flex
+                    direction={{ base: "column", md: "row" }}
+                    gap={4}
+                    align="center"
+                  >
                     <Box>
                       {(logoPreview || company?.logo_url) && (
                         <Image
@@ -175,19 +194,23 @@ function CompanyProfile() {
                 </ChakraField.Root>
 
                 {/* Business Information */}
-                <Stack direction={{ base: "column", md: "row" }} spacing={4}>
+                <Stack direction={{ base: "column", md: "row" }} gap={4}>
                   <ChakraField.Root required invalid={!!errors.business_name}>
                     <ChakraField.Label>Business Name</ChakraField.Label>
                     <Input
                       {...register("business_name", {
                         required: "Business name is required",
-                        maxLength: { value: 255, message: "Business name too long" },
+                        maxLength: {
+                          value: 255,
+                          message: "Business name too long",
+                        },
                       })}
-                      defaultValue={company?.business_name || ""}
                       placeholder="Enter your business name"
                     />
                     {errors.business_name && (
-                      <ChakraField.ErrorText>{errors.business_name.message}</ChakraField.ErrorText>
+                      <ChakraField.ErrorText>
+                        {errors.business_name.message}
+                      </ChakraField.ErrorText>
                     )}
                   </ChakraField.Root>
 
@@ -198,24 +221,24 @@ function CompanyProfile() {
                         required: "NTN/CNIC is required",
                         maxLength: { value: 50, message: "NTN/CNIC too long" },
                       })}
-                      defaultValue={company?.ntn_cnic || ""}
                       placeholder="Enter NTN or CNIC"
                     />
                     {errors.ntn_cnic && (
-                      <ChakraField.ErrorText>{errors.ntn_cnic.message}</ChakraField.ErrorText>
+                      <ChakraField.ErrorText>
+                        {errors.ntn_cnic.message}
+                      </ChakraField.ErrorText>
                     )}
                   </ChakraField.Root>
                 </Stack>
 
                 {/* Location Information */}
-                <Stack direction={{ base: "column", md: "row" }} spacing={4}>
+                <Stack direction={{ base: "column", md: "row" }} gap={4}>
                   <ChakraField.Root required invalid={!!errors.province}>
                     <ChakraField.Label>Province</ChakraField.Label>
                     <Select
                       {...register("province", {
                         required: "Province is required",
                       })}
-                      defaultValue={company?.province || ""}
                       placeholder="Select province"
                     >
                       {provinces.map((province) => (
@@ -225,7 +248,9 @@ function CompanyProfile() {
                       ))}
                     </Select>
                     {errors.province && (
-                      <ChakraField.ErrorText>{errors.province.message}</ChakraField.ErrorText>
+                      <ChakraField.ErrorText>
+                        {errors.province.message}
+                      </ChakraField.ErrorText>
                     )}
                   </ChakraField.Root>
 
@@ -234,13 +259,17 @@ function CompanyProfile() {
                     <Input
                       {...register("city", {
                         required: "City is required",
-                        maxLength: { value: 100, message: "City name too long" },
+                        maxLength: {
+                          value: 100,
+                          message: "City name too long",
+                        },
                       })}
-                      defaultValue={company?.city || ""}
                       placeholder="Enter city"
                     />
                     {errors.city && (
-                      <ChakraField.ErrorText>{errors.city.message}</ChakraField.ErrorText>
+                      <ChakraField.ErrorText>
+                        {errors.city.message}
+                      </ChakraField.ErrorText>
                     )}
                   </ChakraField.Root>
                 </Stack>
@@ -253,28 +282,33 @@ function CompanyProfile() {
                       required: "Address is required",
                       maxLength: { value: 500, message: "Address too long" },
                     })}
-                    defaultValue={company?.address || ""}
                     placeholder="Enter complete business address"
                     rows={3}
                   />
                   {errors.address && (
-                    <ChakraField.ErrorText>{errors.address.message}</ChakraField.ErrorText>
+                    <ChakraField.ErrorText>
+                      {errors.address.message}
+                    </ChakraField.ErrorText>
                   )}
                 </ChakraField.Root>
 
                 {/* Contact Information */}
-                <Stack direction={{ base: "column", md: "row" }} spacing={4}>
+                <Stack direction={{ base: "column", md: "row" }} gap={4}>
                   <ChakraField.Root invalid={!!errors.phone}>
                     <ChakraField.Label>Phone (Optional)</ChakraField.Label>
                     <Input
                       {...register("phone", {
-                        maxLength: { value: 20, message: "Phone number too long" },
+                        maxLength: {
+                          value: 20,
+                          message: "Phone number too long",
+                        },
                       })}
-                      defaultValue={company?.phone || ""}
                       placeholder="Enter phone number"
                     />
                     {errors.phone && (
-                      <ChakraField.ErrorText>{errors.phone.message}</ChakraField.ErrorText>
+                      <ChakraField.ErrorText>
+                        {errors.phone.message}
+                      </ChakraField.ErrorText>
                     )}
                   </ChakraField.Root>
 
@@ -288,11 +322,12 @@ function CompanyProfile() {
                           message: "Invalid email address",
                         },
                       })}
-                      defaultValue={company?.email || ""}
                       placeholder="Enter email address"
                     />
                     {errors.email && (
-                      <ChakraField.ErrorText>{errors.email.message}</ChakraField.ErrorText>
+                      <ChakraField.ErrorText>
+                        {errors.email.message}
+                      </ChakraField.ErrorText>
                     )}
                   </ChakraField.Root>
                 </Stack>
@@ -300,9 +335,9 @@ function CompanyProfile() {
                 {/* Submit Button */}
                 <Button
                   type="submit"
-                  colorScheme="blue"
+                  colorPalette="blue"
                   size="lg"
-                  isLoading={isSubmitting || mutation.isPending}
+                  loading={isSubmitting || mutation.isPending}
                   loadingText={company?.id ? "Updating..." : "Creating..."}
                 >
                   {company?.id ? "Update Company" : "Create Company"}

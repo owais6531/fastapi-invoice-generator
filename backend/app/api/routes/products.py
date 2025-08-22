@@ -6,12 +6,12 @@ from sqlmodel import func, select
 
 from app.api.deps import CurrentUser, SessionDep
 from app.models import (
+    Message,
     Product,
     ProductCreate,
     ProductPublic,
     ProductsPublic,
     ProductUpdate,
-    Message,
 )
 
 router = APIRouter()
@@ -29,7 +29,7 @@ def read_products(
     """
     count_statement = select(func.count()).select_from(Product).where(Product.owner_id == current_user.id)
     count = session.exec(count_statement).one()
-    
+
     statement = (
         select(Product)
         .where(Product.owner_id == current_user.id)
@@ -37,7 +37,7 @@ def read_products(
         .limit(limit)
     )
     products = session.exec(statement).all()
-    
+
     return ProductsPublic(data=products, count=count)
 
 
@@ -86,7 +86,7 @@ def update_product(
         raise HTTPException(status_code=404, detail="Product not found")
     if product.owner_id != current_user.id:
         raise HTTPException(status_code=400, detail="Not enough permissions")
-    
+
     update_dict = product_in.model_dump(exclude_unset=True)
     product.sqlmodel_update(update_dict)
     session.add(product)
@@ -107,7 +107,7 @@ def delete_product(
         raise HTTPException(status_code=404, detail="Product not found")
     if product.owner_id != current_user.id:
         raise HTTPException(status_code=400, detail="Not enough permissions")
-    
+
     session.delete(product)
     session.commit()
     return Message(message="Product deleted successfully")
@@ -128,7 +128,7 @@ def search_products(
         (Product.description.ilike(f"%{query}%")) |
         (Product.hs_code.ilike(f"%{query}%"))
     )
-    
+
     count_statement = (
         select(func.count())
         .select_from(Product)
@@ -136,7 +136,7 @@ def search_products(
         .where(search_filter)
     )
     count = session.exec(count_statement).one()
-    
+
     statement = (
         select(Product)
         .where(Product.owner_id == current_user.id)
@@ -145,7 +145,7 @@ def search_products(
         .limit(limit)
     )
     products = session.exec(statement).all()
-    
+
     return ProductsPublic(data=products, count=count)
 
 
@@ -167,7 +167,7 @@ def get_products_by_hs_code(
         .where(Product.hs_code == hs_code)
     )
     count = session.exec(count_statement).one()
-    
+
     statement = (
         select(Product)
         .where(Product.owner_id == current_user.id)
@@ -176,5 +176,5 @@ def get_products_by_hs_code(
         .limit(limit)
     )
     products = session.exec(statement).all()
-    
+
     return ProductsPublic(data=products, count=count)

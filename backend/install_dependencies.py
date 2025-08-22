@@ -11,28 +11,27 @@ Usage:
 
 import subprocess
 import sys
-from typing import List, Tuple
 
 
-def run_pip_install(packages: List[str], description: str) -> bool:
+def run_pip_install(packages: list[str], description: str) -> bool:
     """
     Install a list of packages using pip.
-    
+
     Args:
         packages: List of package specifications
         description: Description of what's being installed
-    
+
     Returns:
         True if successful, False otherwise
     """
     print(f"\n{'='*60}")
     print(f"Installing {description}...")
     print(f"{'='*60}")
-    
+
     for package in packages:
         print(f"Installing {package}...")
         try:
-            result = subprocess.run(
+            subprocess.run(
                 [sys.executable, "-m", "pip", "install", package],
                 check=True,
                 capture_output=True,
@@ -43,24 +42,24 @@ def run_pip_install(packages: List[str], description: str) -> bool:
             print(f"❌ Failed to install {package}")
             print(f"Error: {e.stderr}")
             return False
-    
+
     return True
 
 
-def verify_installation(packages: List[str]) -> bool:
+def verify_installation(packages: list[str]) -> bool:
     """
     Verify that packages can be imported.
-    
+
     Args:
         packages: List of package names to verify
-    
+
     Returns:
         True if all packages can be imported, False otherwise
     """
     print(f"\n{'='*60}")
     print("Verifying installation...")
     print(f"{'='*60}")
-    
+
     for package in packages:
         try:
             __import__(package)
@@ -68,7 +67,7 @@ def verify_installation(packages: List[str]) -> bool:
         except ImportError:
             print(f"❌ Failed to import {package}")
             return False
-    
+
     return True
 
 
@@ -78,7 +77,7 @@ def main():
     """
     print("FBR Invoicing App - Backend Dependencies Installation")
     print("=====================================================")
-    
+
     # Define installation groups in order
     installation_groups = [
         (
@@ -136,13 +135,13 @@ def main():
             ]
         )
     ]
-    
+
     # Install each group
     for description, packages in installation_groups:
         if not run_pip_install(packages, description):
             print(f"\n❌ Installation failed at: {description}")
             sys.exit(1)
-    
+
     # Verify critical imports
     critical_packages = [
         "fastapi",
@@ -154,7 +153,7 @@ def main():
         "pandas",
         "reportlab"
     ]
-    
+
     if verify_installation(critical_packages):
         print(f"\n{'='*60}")
         print("🎉 All dependencies installed successfully!")
@@ -162,7 +161,7 @@ def main():
         print("python -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8000")
         print(f"{'='*60}")
     else:
-        print(f"\n❌ Some packages failed verification")
+        print("\n❌ Some packages failed verification")
         sys.exit(1)
 
 

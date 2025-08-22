@@ -1,54 +1,50 @@
+import { Button } from "@/components/ui/button"
+import { Card, CardBody, CardHeader } from "@/components/ui/card"
 import {
-  Box,
-  Button,
-  Container,
-  Flex,
-  Heading,
-  VStack,
-  HStack,
-  Card,
-  CardBody,
-  CardHeader,
-  Text,
-  Badge,
-  Table,
-
-  Separator,
-  Grid,
-  GridItem,
-
-  Dialog,
-  useDisclosure,
-  Tooltip,
-  IconButton,
-  Menu,
-  Spinner,
-  Alert,
-} from "@chakra-ui/react"
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router"
+  MenuContent,
+  MenuItem,
+  MenuRoot,
+  MenuTrigger,
+} from "@/components/ui/menu"
 import { toaster } from "@/components/ui/toaster"
-import { useRef } from "react"
-import { format } from "date-fns"
 import {
-  FiEdit,
-  FiDownload,
-  FiSend,
-  FiCopy,
+  Alert,
+  Badge,
+  Box,
+  Container,
+  Dialog,
+  Flex,
+  Grid,
+  HStack,
+  Heading,
+  IconButton,
+  Separator,
+  Spinner,
+  Table,
+  Text,
+  VStack,
+  useDisclosure,
+} from "@chakra-ui/react"
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import { Link, createFileRoute, useNavigate } from "@tanstack/react-router"
+import { format } from "date-fns"
+import { useRef } from "react"
+import {
   FiArrowLeft,
+  FiCalendar,
+  FiCopy,
+  FiDollarSign,
+  FiDownload,
+  FiEdit,
+  FiFileText,
   FiMoreVertical,
   FiPrinter,
-  FiFileText,
+  FiSend,
   FiUser,
-  FiCalendar,
-  FiDollarSign,
 } from "react-icons/fi"
 
-import { type ApiError } from "@/client"
-import {
-  type FBRInvoicePublic,
-  FBRInvoicesService,
-} from "@/client/fbr-service"
+import type { ApiError } from "@/client"
+import { FBRInvoicesService } from "@/client/fbr-service"
 
 const statusColors = {
   draft: "gray",
@@ -64,16 +60,12 @@ const statusLabels = {
   error: "Error",
 }
 
-export const Route = createFileRoute("/_layout/invoices/$invoiceId")({ 
-  component: InvoiceDetailPage,
-})
-
 function InvoiceDetailPage() {
   const { invoiceId } = Route.useParams()
   const navigate = useNavigate()
   const queryClient = useQueryClient()
 
-  const { isOpen, onOpen, onClose } = useDisclosure()
+  const { open, onOpen, onClose } = useDisclosure()
   const cancelRef = useRef<HTMLButtonElement>(null)
 
   // Query to get invoice details
@@ -85,6 +77,18 @@ function InvoiceDetailPage() {
     queryKey: ["fbr-invoice", invoiceId],
     queryFn: () => FBRInvoicesService.readFbrInvoice({ invoiceId }),
   })
+
+  // Query to get invoice items
+  const {
+    data: invoiceItemsData,
+    isLoading: isItemsLoading,
+  } = useQuery({
+    queryKey: ["fbr-invoice-items", invoiceId],
+    queryFn: () => FBRInvoicesService.readInvoiceItems({ invoiceId }),
+    enabled: !!invoiceId,
+  })
+
+  const invoiceItems = invoiceItemsData?.data || []
 
   // Mutation to submit invoice to FBR
   const submitToFBRMutation = useMutation({
@@ -117,7 +121,7 @@ function InvoiceDetailPage() {
         description: "Invoice cloned successfully",
         type: "success",
       })
-      navigate({ to: `/invoices/${newInvoice.id}/edit` })
+      navigate({ to: "/invoices/$invoiceId/edit", params: { invoiceId: newInvoice.id } })
     },
     onError: (err: ApiError) => {
       toaster.create({
@@ -130,35 +134,43 @@ function InvoiceDetailPage() {
 
   const handleDownloadPDF = async () => {
     try {
-      const response = await FBRInvoicesService.generateFbrInvoicePdf({ invoiceId })
-      // Handle PDF download
-      const blob = new Blob([response], { type: 'application/pdf' })
-      const url = window.URL.createObjectURL(blob)
-      const a = document.createElement('a')
-      a.href = url
-      a.download = `invoice-${invoice?.invoice_ref_no || invoiceId}.pdf`
-      document.body.appendChild(a)
-      a.click()
-      window.URL.revokeObjectURL(url)
-      document.body.removeChild(a)
-    } catch (error) {
+      // TODO: Implement PDF generation service method
       toaster.create({
-        title: "Error",
-        description: "Failed to download PDF",
-        type: "error",
+        title: "Info",
+        description: "PDF generation feature coming soon",
+        type: "info",
       })
-    }
-  }
+      // const response = await FBRInvoicesService.generateFbrInvoicePdf({
+      //   invoiceId,
+      // })
+      // // Handle PDF download
+      // const blob = new Blob([response], { type: "application/pdf" })
+      // const url = window.URL.createObjectURL(blob)
+      // const a = document.createElement("a")
+      // a.href = url
+      // a.download = `invoice-${invoice?.invoice_ref_no || invoiceId}.pdf`
+      // document.body.appendChild(a)
+      // a.click()
+       // window.URL.revokeObjectURL(url)
+       // document.body.removeChild(a)
+     } catch (error) {
+       toaster.create({
+         title: "Error",
+         description: "Failed to download PDF",
+         type: "error",
+       })
+     }
+   }
 
   const handlePrint = () => {
     window.print()
   }
 
-  if (isLoading) {
+  if (isLoading || isItemsLoading) {
     return (
       <Container maxW="7xl" py={8}>
         <Flex justify="center" align="center" minH="400px">
-          <VStack spacing={4}>
+          <VStack gap={4}>
             <Spinner size="xl" />
             <Text>Loading invoice...</Text>
           </VStack>
@@ -182,23 +194,25 @@ function InvoiceDetailPage() {
 
   return (
     <Container maxW="7xl" py={8}>
-      <VStack spacing={6} align="stretch">
+      <VStack gap={6} align="stretch">
         {/* Header */}
         <Flex justify="space-between" align="center">
           <HStack>
-            <Button
-              as={Link}
-              to="/invoices"
-              leftIcon={<FiArrowLeft />}
-              variant="ghost"
-            >
-              Back to Invoices
-            </Button>
+            <Link to="/invoices">
+              <Button variant="ghost">
+                <FiArrowLeft />
+                Back to Invoices
+              </Button>
+            </Link>
             <Separator orientation="vertical" h="6" />
-            <VStack align="start" spacing={0}>
+            <VStack align="start" gap={0}>
               <Heading size="lg">Invoice {invoice.invoice_ref_no}</Heading>
               <HStack>
-                <Badge colorScheme={statusColors[invoice.status as keyof typeof statusColors]}>
+                <Badge
+                  colorScheme={
+                    statusColors[invoice.status as keyof typeof statusColors]
+                  }
+                >
                   {statusLabels[invoice.status as keyof typeof statusLabels]}
                 </Badge>
                 {invoice.fbr_reference && (
@@ -211,46 +225,43 @@ function InvoiceDetailPage() {
           </HStack>
 
           <HStack>
-            <Button leftIcon={<FiPrinter />} onClick={handlePrint} variant="outline">
+            <Button onClick={handlePrint} variant="outline">
+              <FiPrinter />
               Print
             </Button>
-            <Button leftIcon={<FiDownload />} onClick={handleDownloadPDF}>
+            <Button onClick={handleDownloadPDF}>
+              <FiDownload />
               Download PDF
             </Button>
-            
+
             {invoice.status === "draft" && (
-              <Button
-                as={Link}
-                to={`/invoices/${invoiceId}/edit`}
-                leftIcon={<FiEdit />}
-                colorScheme="blue"
-              >
-                Edit
-              </Button>
+              <Link to="/invoices/$invoiceId/edit" params={{ invoiceId }}>
+                <Button colorPalette="blue">
+                  <FiEdit />
+                  Edit
+                </Button>
+              </Link>
             )}
-            
-            <Menu.Root>
-              <Menu.Trigger asChild>
-                <IconButton
-                  aria-label="More actions"
-                  variant="outline"
-                >
+
+            <MenuRoot>
+              <MenuTrigger asChild>
+                <IconButton aria-label="More actions" variant="outline">
                   <FiMoreVertical />
                 </IconButton>
-              </Menu.Trigger>
-              <Menu.Content>
-                <Menu.Item onClick={() => cloneMutation.mutate()}>
+              </MenuTrigger>
+              <MenuContent>
+                <MenuItem value="clone" onClick={() => cloneMutation.mutate()}>
                   <FiCopy />
                   Clone Invoice
-                </Menu.Item>
+                </MenuItem>
                 {invoice.status === "draft" && (
-                  <Menu.Item onClick={onOpen}>
+                  <MenuItem value="submit" onClick={onOpen}>
                     <FiSend />
                     Submit to FBR
-                  </Menu.Item>
+                  </MenuItem>
                 )}
-              </Menu.Content>
-            </Menu.Root>
+              </MenuContent>
+            </MenuRoot>
           </HStack>
         </Flex>
 
@@ -258,10 +269,12 @@ function InvoiceDetailPage() {
         <Grid templateColumns="repeat(auto-fit, minmax(250px, 1fr))" gap={4}>
           <Card>
             <CardBody>
-              <VStack align="start" spacing={2}>
+              <VStack align="start" gap={2}>
                 <HStack>
                   <FiCalendar color="gray" />
-                  <Text fontSize="sm" color="gray.600">Invoice Date</Text>
+                  <Text fontSize="sm" color="gray.600">
+                    Invoice Date
+                  </Text>
                 </HStack>
                 <Text fontWeight="bold">
                   {format(new Date(invoice.invoice_date), "MMM dd, yyyy")}
@@ -269,13 +282,15 @@ function InvoiceDetailPage() {
               </VStack>
             </CardBody>
           </Card>
-          
+
           <Card>
             <CardBody>
-              <VStack align="start" spacing={2}>
+              <VStack align="start" gap={2}>
                 <HStack>
                   <FiDollarSign color="gray" />
-                  <Text fontSize="sm" color="gray.600">Total Amount</Text>
+                  <Text fontSize="sm" color="gray.600">
+                    Total Amount
+                  </Text>
                 </HStack>
                 <Text fontWeight="bold" fontSize="lg" color="green.500">
                   Rs. {invoice.total_invoice_value.toLocaleString()}
@@ -283,32 +298,20 @@ function InvoiceDetailPage() {
               </VStack>
             </CardBody>
           </Card>
-          
-          {invoice.due_date && (
-            <Card>
-              <CardBody>
-                <VStack align="start" spacing={2}>
-                  <HStack>
-                    <FiCalendar color="gray" />
-                    <Text fontSize="sm" color="gray.600">Due Date</Text>
-                  </HStack>
-                  <Text fontWeight="bold">
-                    {format(new Date(invoice.due_date), "MMM dd, yyyy")}
-                  </Text>
-                </VStack>
-              </CardBody>
-            </Card>
-          )}
-          
+
+
+
           <Card>
             <CardBody>
-              <VStack align="start" spacing={2}>
+              <VStack align="start" gap={2}>
                 <HStack>
                   <FiFileText color="gray" />
-                  <Text fontSize="sm" color="gray.600">Invoice Type</Text>
+                  <Text fontSize="sm" color="gray.600">
+                    Invoice Type
+                  </Text>
                 </HStack>
                 <Text fontWeight="bold" textTransform="capitalize">
-                  {invoice.invoice_type.replace('_', ' ')}
+                  {invoice.invoice_type.replace("_", " ")}
                 </Text>
               </VStack>
             </CardBody>
@@ -326,7 +329,7 @@ function InvoiceDetailPage() {
               </HStack>
             </CardHeader>
             <CardBody>
-              <VStack align="start" spacing={3}>
+              <VStack align="start" gap={3}>
                 <Box>
                   <Text fontWeight="bold" fontSize="lg">
                     {invoice.seller_business_name}
@@ -336,7 +339,9 @@ function InvoiceDetailPage() {
                 <Box>
                   <Text fontWeight="medium">Address:</Text>
                   <Text>{invoice.seller_address}</Text>
-                  <Text>{invoice.seller_city}, {invoice.seller_province}</Text>
+                  <Text>
+                    {invoice.seller_city}, {invoice.seller_province}
+                  </Text>
                 </Box>
                 {invoice.seller_phone && (
                   <Text>Phone: {invoice.seller_phone}</Text>
@@ -357,19 +362,22 @@ function InvoiceDetailPage() {
               </HStack>
             </CardHeader>
             <CardBody>
-              <VStack align="start" spacing={3}>
+              <VStack align="start" gap={3}>
                 <Box>
                   <Text fontWeight="bold" fontSize="lg">
                     {invoice.buyer_business_name}
                   </Text>
                   <Text color="gray.600">
-                    {invoice.buyer_registration_type.toUpperCase()}: {invoice.buyer_ntn || invoice.buyer_cnic}
+                    {invoice.buyer_registration_type.toUpperCase()}:{" "}
+                    {invoice.buyer_ntn || invoice.buyer_cnic}
                   </Text>
                 </Box>
                 <Box>
                   <Text fontWeight="medium">Address:</Text>
                   <Text>{invoice.buyer_address}</Text>
-                  <Text>{invoice.buyer_city}, {invoice.buyer_province}</Text>
+                  <Text>
+                    {invoice.buyer_city}, {invoice.buyer_province}
+                  </Text>
                 </Box>
                 {invoice.buyer_phone && (
                   <Text>Phone: {invoice.buyer_phone}</Text>
@@ -389,31 +397,51 @@ function InvoiceDetailPage() {
           </CardHeader>
           <CardBody>
             <Box overflowX="auto">
-              <Table.Root variant="simple">
+              <Table.Root>
                 <Table.Header>
                   <Table.Row>
                     <Table.ColumnHeader>Description</Table.ColumnHeader>
                     <Table.ColumnHeader>HS Code</Table.ColumnHeader>
-                    <Table.ColumnHeader textAlign="end">Quantity</Table.ColumnHeader>
-                    <Table.ColumnHeader textAlign="end">Unit Price</Table.ColumnHeader>
-                    <Table.ColumnHeader textAlign="end">Discount</Table.ColumnHeader>
-                    <Table.ColumnHeader textAlign="end">Tax Rate</Table.ColumnHeader>
-                    <Table.ColumnHeader textAlign="end">Tax Amount</Table.ColumnHeader>
-                    <Table.ColumnHeader textAlign="end">Total</Table.ColumnHeader>
+                    <Table.ColumnHeader textAlign="end">
+                      Quantity
+                    </Table.ColumnHeader>
+                    <Table.ColumnHeader textAlign="end">
+                      Unit Price
+                    </Table.ColumnHeader>
+                    <Table.ColumnHeader textAlign="end">
+                      Discount
+                    </Table.ColumnHeader>
+                    <Table.ColumnHeader textAlign="end">
+                      Tax Rate
+                    </Table.ColumnHeader>
+                    <Table.ColumnHeader textAlign="end">
+                      Tax Amount
+                    </Table.ColumnHeader>
+                    <Table.ColumnHeader textAlign="end">
+                      Total
+                    </Table.ColumnHeader>
                   </Table.Row>
                 </Table.Header>
                 <Table.Body>
-                  {invoice.items?.map((item, index) => (
-                    <Table.Row key={index}>
-                      <Table.Cell>{item.item_description}</Table.Cell>
-                      <Table.Cell fontFamily="mono">{item.hs_code}</Table.Cell>
+                  {invoiceItems.map((item) => (
+                    <Table.Row key={item.id}>
+                      <Table.Cell>{item.product_description}</Table.Cell>
+                      <Table.Cell fontFamily="mono">{item.hs_code || 'N/A'}</Table.Cell>
                       <Table.Cell textAlign="end">{item.quantity}</Table.Cell>
-                      <Table.Cell textAlign="end">Rs. {item.unit_price.toLocaleString()}</Table.Cell>
-                      <Table.Cell textAlign="end">Rs. {item.discount_amount.toLocaleString()}</Table.Cell>
-                      <Table.Cell textAlign="end">{item.sales_tax_rate}%</Table.Cell>
-                      <Table.Cell textAlign="end">Rs. {item.sales_tax_amount.toLocaleString()}</Table.Cell>
+                      <Table.Cell textAlign="end">
+                        Rs. {item.unit_price.toLocaleString()}
+                      </Table.Cell>
+                      <Table.Cell textAlign="end">
+                        Rs. {(item.discount || 0).toLocaleString()}
+                      </Table.Cell>
+                      <Table.Cell textAlign="end">
+                        {((item.sales_tax_applicable / item.value_sales_excluding_st) * 100).toFixed(1)}%
+                      </Table.Cell>
+                      <Table.Cell textAlign="end">
+                        Rs. {item.sales_tax_applicable.toLocaleString()}
+                      </Table.Cell>
                       <Table.Cell textAlign="end" fontWeight="bold">
-                        Rs. {item.total_amount.toLocaleString()}
+                        Rs. {item.total_value.toLocaleString()}
                       </Table.Cell>
                     </Table.Row>
                   ))}
@@ -424,28 +452,24 @@ function InvoiceDetailPage() {
             {/* Invoice Totals */}
             <Separator my={6} />
             <Flex justify="flex-end">
-              <VStack align="flex-end" spacing={2} minW="300px">
+              <VStack align="flex-end" gap={2} minW="300px">
                 <HStack justify="space-between" w="full">
-                  <Text>Subtotal:</Text>
+                  <Text>Sales Value:</Text>
                   <Text fontWeight="medium">
-                    Rs. {(invoice.total_invoice_value - invoice.total_sales_tax + invoice.total_discount).toLocaleString()}
+                    Rs. {invoice.total_sales_value.toLocaleString()}
                   </Text>
                 </HStack>
                 <HStack justify="space-between" w="full">
-                  <Text>Total Discount:</Text>
-                  <Text fontWeight="medium" color="red.500">
-                    -Rs. {invoice.total_discount.toLocaleString()}
-                  </Text>
-                </HStack>
-                <HStack justify="space-between" w="full">
-                  <Text>Total Sales Tax:</Text>
+                  <Text>Total Tax:</Text>
                   <Text fontWeight="medium">
-                    Rs. {invoice.total_sales_tax.toLocaleString()}
+                    Rs. {invoice.total_tax_amount.toLocaleString()}
                   </Text>
                 </HStack>
                 <Separator />
                 <HStack justify="space-between" w="full">
-                  <Text fontSize="lg" fontWeight="bold">Total Amount:</Text>
+                  <Text fontSize="lg" fontWeight="bold">
+                    Total Amount:
+                  </Text>
                   <Text fontSize="lg" fontWeight="bold" color="green.500">
                     Rs. {invoice.total_invoice_value.toLocaleString()}
                   </Text>
@@ -455,36 +479,15 @@ function InvoiceDetailPage() {
           </CardBody>
         </Card>
 
-        {/* Additional Information */}
-        {(invoice.payment_terms || invoice.notes) && (
-          <Grid templateColumns="repeat(auto-fit, minmax(400px, 1fr))" gap={6}>
-            {invoice.payment_terms && (
-              <Card>
-                <CardHeader>
-                  <Heading size="sm">Payment Terms</Heading>
-                </CardHeader>
-                <CardBody>
-                  <Text>{invoice.payment_terms}</Text>
-                </CardBody>
-              </Card>
-            )}
-            
-            {invoice.notes && (
-              <Card>
-                <CardHeader>
-                  <Heading size="sm">Notes</Heading>
-                </CardHeader>
-                <CardBody>
-                  <Text>{invoice.notes}</Text>
-                </CardBody>
-              </Card>
-            )}
-          </Grid>
-        )}
+
       </VStack>
 
       {/* Submit to FBR Confirmation Dialog */}
-      <Dialog.Root open={isOpen} onOpenChange={(e) => e.open ? onOpen() : onClose()} role="alertdialog">
+      <Dialog.Root
+        open={open}
+        onOpenChange={(e) => (e.open ? onOpen() : onClose())}
+        role="alertdialog"
+      >
         <Dialog.Backdrop />
         <Dialog.Positioner>
           <Dialog.Content>
@@ -495,10 +498,13 @@ function InvoiceDetailPage() {
             </Dialog.Header>
 
             <Dialog.Body>
-              Are you sure you want to submit this invoice to FBR? This action cannot be undone.
-              <br /><br />
+              Are you sure you want to submit this invoice to FBR? This action
+              cannot be undone.
+              <br />
+              <br />
               <Text fontSize="sm" color="gray.600">
-                Invoice: {invoice.invoice_ref_no}<br />
+                Invoice: {invoice.invoice_ref_no}
+                <br />
                 Amount: Rs. {invoice.total_invoice_value.toLocaleString()}
               </Text>
             </Dialog.Body>
@@ -523,3 +529,7 @@ function InvoiceDetailPage() {
     </Container>
   )
 }
+
+export const Route = createFileRoute("/_layout/invoices/$invoiceId")({
+  component: InvoiceDetailPage,
+})

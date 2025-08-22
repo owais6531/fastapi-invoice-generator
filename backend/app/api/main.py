@@ -1,6 +1,17 @@
 from fastapi import APIRouter
 
-from app.api.routes import items, invoice, login, private, users, utils, companies, customers, products, fbr_invoices
+from app.api.routes import (
+    companies,
+    customers,
+    fbr_invoices,
+    invoice,
+    items,
+    login,
+    private,
+    products,
+    users,
+    utils,
+)
 from app.core.config import settings
 
 api_router = APIRouter()

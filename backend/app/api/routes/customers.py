@@ -29,7 +29,7 @@ def read_customers(
     """
     count_statement = select(func.count()).select_from(Customer).where(Customer.owner_id == current_user.id)
     count = session.exec(count_statement).one()
-    
+
     statement = (
         select(Customer)
         .where(Customer.owner_id == current_user.id)
@@ -37,7 +37,7 @@ def read_customers(
         .limit(limit)
     )
     customers = session.exec(statement).all()
-    
+
     return CustomersPublic(data=customers, count=count)
 
 
@@ -86,7 +86,7 @@ def update_customer(
         raise HTTPException(status_code=404, detail="Customer not found")
     if customer.owner_id != current_user.id:
         raise HTTPException(status_code=400, detail="Not enough permissions")
-    
+
     update_dict = customer_in.model_dump(exclude_unset=True)
     customer.sqlmodel_update(update_dict)
     session.add(customer)
@@ -107,7 +107,7 @@ def delete_customer(
         raise HTTPException(status_code=404, detail="Customer not found")
     if customer.owner_id != current_user.id:
         raise HTTPException(status_code=400, detail="Not enough permissions")
-    
+
     session.delete(customer)
     session.commit()
     return Message(message="Customer deleted successfully")
@@ -128,7 +128,7 @@ def search_customers(
         (Customer.business_name.ilike(f"%{query}%")) |
         (Customer.ntn_cnic.ilike(f"%{query}%"))
     )
-    
+
     count_statement = (
         select(func.count())
         .select_from(Customer)
@@ -136,7 +136,7 @@ def search_customers(
         .where(search_filter)
     )
     count = session.exec(count_statement).one()
-    
+
     statement = (
         select(Customer)
         .where(Customer.owner_id == current_user.id)
@@ -145,5 +145,5 @@ def search_customers(
         .limit(limit)
     )
     customers = session.exec(statement).all()
-    
+
     return CustomersPublic(data=customers, count=count)
